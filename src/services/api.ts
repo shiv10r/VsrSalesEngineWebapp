@@ -230,6 +230,10 @@ class ApiService {
     }
   }
 
+  async deleteOpportunity(id: string): Promise<boolean> {
+    return this.archiveOpportunity(id);
+  }
+
   async getSources(): Promise<SourceDefinition[]> {
     try {
       const res = await fetch(`${API_BASE_URL}/sources`, { headers: this.getHeaders() });
@@ -504,6 +508,18 @@ class ApiService {
   async removeSuppression(id: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE_URL}/outreach/suppressions/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async deleteCampaign(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/campaigns/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
