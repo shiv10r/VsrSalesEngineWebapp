@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { SignIn } from './components/screens/SignIn';
 import { api } from './services/api';
-import { Campaign, Contact, Opportunity, OutreachRow } from './types';
+import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SourceDefinition } from './types';
 
 const navGroups = [
   { title: 'WORKSPACE', items: [
@@ -90,6 +90,64 @@ export function App() {
   const [detail, setDetail] = useState<Opportunity | null>(null);
   const [settingsTab, setSettingsTab] = useState('General');
   const [dark, setDark] = useState(false);
+  const [sources, setSources] = useState<SourceDefinition[]>([]);
+  const [searchProfiles, setSearchProfiles] = useState<SearchProfile[]>([]);
+  const [lastRunResult, setLastRunResult] = useState<DiscoveryRunResult | null>(null);
+  const [isRunningDiscovery, setIsRunningDiscovery] = useState(false);
+
+  const loadSourcesAndProfiles = async () => {
+    try {
+      const [srcData, profData] = await Promise.all([
+        api.getSources(),
+        api.getSearchProfiles(),
+      ]);
+      if (srcData && srcData.length > 0) setSources(srcData);
+      if (profData && profData.length > 0) setSearchProfiles(profData);
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    loadSourcesAndProfiles();
+  }, [page]);
+
+  const handleUpdateSourceStatus = async (id: string, newStatus: string) => {
+    const updated = await api.updateSourceStatus(id, newStatus);
+    if (updated) {
+      setSources(prev => prev.map(s => s.id === id ? updated : s));
+      notify(`Source ${updated.name} updated to ${newStatus}`);
+    } else {
+      setSources(prev => prev.map(s => s.id === id ? { ...s, policyStatus: newStatus } : s));
+      notify(`Source policy updated to ${newStatus} (local)`);
+    }
+  };
+
+  const handleRunDiscovery = async () => {
+    setIsRunningDiscovery(true);
+    notify('Starting opportunity discovery run across selected sources...');
+    try {
+      const res = await api.runDiscovery({
+        targetKeywords: query || '.NET Developer',
+        location: 'Remote · India',
+        selectedSources: sourceFilters,
+        maxResults: 30,
+      });
+      if (res) {
+        setLastRunResult(res);
+        notify(`Discovery complete: ${res.newMatchesCount} new match(es), ${res.duplicateCount} duplicate(s) evaluated.`);
+        await loadOpportunities();
+        go('Search results');
+      } else {
+        notify('Discovery finished in preview mode.');
+        go('Search results');
+      }
+    } catch {
+      notify('Failed to run discovery.');
+    } finally {
+      setIsRunningDiscovery(false);
+    }
+  };
 
   const loadOpportunities = async () => {
     try {
@@ -613,7 +671,14 @@ export function App() {
                 </div>
                 <div className="form-footer">
                   <span><ShieldCheck size={15} /> Platform access rules are respected.</span>
-                  <Button variant="primary" icon={Search} onClick={() => { setSourceFilter('All sources'); go('Search results'); }}>Search selected sources</Button>
+                  <Button
+                    variant="primary"
+                    icon={Search}
+                    disabled={isRunningDiscovery}
+                    onClick={handleRunDiscovery}
+                  >
+                    {isRunningDiscovery ? 'Running discovery...' : 'Run live discovery'}
+                  </Button>
                 </div>
               </section>
             </div>
@@ -636,14 +701,41 @@ export function App() {
           {pageHeading('Search results', 'Review illustrative matches and their source evidence before qualifying them.', (
             <>
               <Button onClick={() => go('Discover')}>Edit search</Button>
-              <Button variant="primary" icon={Bookmark} onClick={() => notify('Search saved in session.')}>Save search</Button>
+              <Button variant="primary" icon={Bookmark} onClick={() => notify('Search profile saved in session.')}>Save search</Button>
             </>
-          ), 'DISCOVERY RUN · DEMO')}
+          ), 'DISCOVERY RUN')}
           <div className="run-status">
             <div className="run-icon"><CheckCircle2 size={18} /></div>
-            <div><strong>Search run completed</strong><p>{opportunities.length} matches · Source evidence recorded</p></div>
-            <Pill type="green">Completed</Pill>
+            <div>
+              <strong>{lastRunResult ? `Run ${lastRunResult.runId} completed` : 'Search run completed'}</strong>
+              <p>
+                {lastRunResult
+                  ? `${lastRunResult.newMatchesCount} new matches · ${lastRunResult.duplicateCount} duplicate(s) evaluated · ${lastRunResult.evaluatedCount} total candidates`
+                  : `${opportunities.length} matches · Source evidence recorded`}
+              </p>
+            </div>
+            <Pill type="green">{lastRunResult?.status || 'Completed'}</Pill>
           </div>
+
+          {lastRunResult && lastRunResult.sourceMetrics && (
+            <div className="metric-strip" style={{ display: 'flex', gap: '10px', margin: '14px 0', flexWrap: 'wrap' }}>
+              {lastRunResult.sourceMetrics.map((sm, i) => (
+                <div key={i} style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 14px', flex: '1', minWidth: '180px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '12px' }}>{sm.sourceName}</strong>
+                    <Pill type={sm.status === 'Success' ? 'green' : sm.status === 'PolicyRestricted' ? 'amber' : 'neutral'}>
+                      {sm.status}
+                    </Pill>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>
+                    Fetched: <b>{sm.recordsFetched}</b> · New: <b>{sm.newMatches}</b>
+                    {sm.rejectedByPolicy > 0 && <span style={{ color: '#d97706', marginLeft: '6px' }}>Policy restricted</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <section className="panel table-panel">
             <div className="panel-heading"><div><h2>Potential matches</h2><p>Validate opening details and contact channels before outreach.</p></div></div>
             {opportunitiesTable()}
@@ -772,20 +864,53 @@ export function App() {
     }
 
     if (page === 'Sources') {
+      const activeSources = sources.length > 0 ? sources : [
+        { id: 'SRC-001', name: 'Company careers', description: 'Target corporate career pages and approved public job boards.', category: 'Careers', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Extracted from public career portal.', dailyRequestLimit: 500, currentDayRequests: 42, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+        { id: 'SRC-002', name: 'Public job board', description: 'Public indexing boards and technology work listings.', category: 'JobBoard', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Referenced from public job board listing.', dailyRequestLimit: 300, currentDayRequests: 18, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+        { id: 'SRC-003', name: 'Direct company research', description: 'Verified manual and automated deep research on target organizations.', category: 'Research', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Verified research entry by sales team member.', dailyRequestLimit: 200, currentDayRequests: 9, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+        { id: 'SRC-004', name: 'Public procurement', description: 'Government and public sector RFP / vendor registration portals.', category: 'Procurement', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Public procurement notice / tender reference.', dailyRequestLimit: 150, currentDayRequests: 3, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+        { id: 'SRC-005', name: 'Approved feed', description: 'Syndicated developer contract and technology requirement feeds.', category: 'Feed', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Syndicated feed item with canonical URL.', dailyRequestLimit: 400, currentDayRequests: 24, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+        { id: 'SRC-006', name: 'LinkedIn handoff', description: 'Manual browser handoff only. Automated scraping and automated DMs prohibited by policy.', category: 'Social', policyStatus: 'Restricted', allowsDirectFetch: false, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Manual external browser link only. No automated access.', dailyRequestLimit: 0, currentDayRequests: 0, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
+      ];
+
       return (
         <>
-          {pageHeading('Sources & integrations', 'Manage source connectors with explicit access methods and clear limitations.', <Button icon={RefreshCw} onClick={() => notify('Connectors healthy.')}>Check status</Button>, 'DATA SOURCES')}
+          {pageHeading('Sources & integrations', 'Manage source connectors with explicit access methods and clear policy rules.', <Button icon={RefreshCw} onClick={() => { loadSourcesAndProfiles(); notify('Source registry reloaded.'); }}>Refresh registry</Button>, 'DATA SOURCES')}
+          <div className="notice-inline">
+            <Info size={15} />
+            <span>Policy rule: LinkedIn handoff is restricted by design. Automated scraping and unsolicited platform DMs are prohibited.</span>
+          </div>
           <div className="sources-grid">
-            {[{ name: 'Company careers', desc: 'Public career pages', method: 'Public web', status: 'Connected' },
-              { name: 'Public job boards', desc: 'Official public feeds', method: 'API / Feed', status: 'Connected' },
-              { name: 'LinkedIn handoff', desc: 'Manual review link', method: 'Human handoff', status: 'Manual handoff' }].map(s => (
-              <section className="panel source-card" key={s.name}>
-                <h3>{s.name}</h3>
-                <p>{s.desc}</p>
-                <div className="source-method"><span>ACCESS METHOD</span><strong>{s.method}</strong></div>
-                <div className="source-card-bottom">
-                  <Pill type={s.status === 'Connected' ? 'green' : 'blue'} dot>{s.status}</Pill>
-                  <Toggle checked={!!connected[s.name]} onChange={(v: boolean) => setConnected(p => ({ ...p, [s.name]: v }))} label={`Toggle ${s.name}`} />
+            {activeSources.map(s => (
+              <section className="panel source-card" key={s.id || s.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <h3>{s.name}</h3>
+                  <Pill type={s.policyStatus === 'Active' ? 'green' : s.policyStatus === 'Restricted' ? 'amber' : 'neutral'} dot>
+                    {s.policyStatus}
+                  </Pill>
+                </div>
+                <p>{s.description}</p>
+                <div className="source-method">
+                  <span>CATEGORY / HEALTH</span>
+                  <strong>{s.category} · {s.healthStatus}</strong>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--muted)', margin: '8px 0' }}>
+                  Daily requests: <b>{s.currentDayRequests}</b> / {s.dailyRequestLimit > 0 ? s.dailyRequestLimit : 'Manual only'}
+                </div>
+                <div className="source-card-bottom" style={{ marginTop: '10px' }}>
+                  <select
+                    value={s.policyStatus}
+                    onChange={e => handleUpdateSourceStatus(s.id, e.target.value)}
+                    style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)' }}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Restricted">Restricted</option>
+                    <option value="UnderReview">UnderReview</option>
+                    <option value="Disabled">Disabled</option>
+                  </select>
+                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                    {s.allowsDirectFetch ? 'Direct fetch' : 'Handoff only'}
+                  </span>
                 </div>
               </section>
             ))}
@@ -795,6 +920,8 @@ export function App() {
     }
 
     if (page === 'Vendor readiness') {
+      const vendorRequirements = opportunities.filter(o => o.docs);
+
       return (
         <>
           {pageHeading('Vendor readiness', 'Track documentary requirements separately from sales fit. An opportunity can remain visible while readiness is incomplete.', null, 'ELIGIBILITY & COMPLIANCE')}
@@ -803,13 +930,57 @@ export function App() {
             <span>VSR has not asserted GST registration, office premises, certifications, or other verification documents. Mark requirements as pending until verified.</span>
           </div>
           <section className="panel table-panel">
-            <div className="panel-heading"><h2>Requirements requiring review</h2></div>
+            <div className="panel-heading">
+              <div>
+                <h2>Requirements requiring review ({vendorRequirements.length})</h2>
+                <p>Active opportunities with mandatory supplier onboarding or tender documentation</p>
+              </div>
+            </div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>OPPORTUNITY</th><th>REQUIREMENT</th><th>STATUS</th><th>OWNER</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>OPPORTUNITY</th>
+                    <th>REQUIREMENT / NOTES</th>
+                    <th>SOURCE</th>
+                    <th>CURRENT STATUS</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr><td><strong>CloudHarbor Labs</strong></td><td>Supplier onboarding pack</td><td><Pill type="amber" dot>Needs assessment</Pill></td><td>Sales team</td></tr>
-                  <tr><td><strong>NimbusWorks</strong></td><td>GST and legal entity details</td><td><Pill type="red" dot>Missing evidence</Pill></td><td>Unassigned</td></tr>
+                  {vendorRequirements.map(o => (
+                    <tr key={o.id}>
+                      <td>
+                        <div className="company-cell">
+                          <div className="company-logo logo-1">{o.company.slice(0, 2)}</div>
+                          <div><strong>{o.company}</strong><small>{o.title}</small></div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '12px', maxWidth: '320px' }}>
+                          {o.vendorRequirementNotes || 'Supplier registration and compliance pack required.'}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="source-cell">{o.source}</span>
+                      </td>
+                      <td>
+                        <Pill type={statusTone(o.status)} dot>{o.status}</Pill>
+                      </td>
+                      <td>
+                        <button className="row-action" onClick={() => setDetail(o)}>
+                          Inspect <ChevronRight size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {vendorRequirements.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted)' }}>
+                        No opportunities currently require vendor readiness documentation.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
