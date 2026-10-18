@@ -11,6 +11,7 @@ import {
   KeyRound, Database, Code2
 } from 'lucide-react';
 import { SignIn } from './components/screens/SignIn';
+import { DraftComposerModal } from './components/DraftComposerModal';
 import { api } from './services/api';
 import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SourceDefinition } from './types';
 
@@ -402,17 +403,37 @@ export function App() {
           <span><i className="footer-dot" /> Prototype workspace <span className="footer-sep">·</span> Data is illustrative</span>
         </footer>
       </main>
-      {modal && <Modal modal={modal} onClose={() => setModal(null)} onNotify={notify} onCreate={(m: any) => {
-        if (m.type === 'campaign') {
-          setCampaigns(prev => [{ name: m.name || 'New sales campaign', audience: m.audience || 'Custom audience', sent: 0, replies: 0, status: 'Draft', next: 'Not scheduled' }, ...prev]);
-          notify('Campaign draft created');
-        } else if (m.type === 'contact') {
-          handleCreateContact(m);
-        } else if (m.type === 'opportunity') {
-          handleCreateOpportunity(m);
-        }
-        setModal(null);
-      }} />}
+      {modal && modal.type === 'compose' ? (
+        <DraftComposerModal
+          isOpen={true}
+          onClose={() => setModal(null)}
+          contacts={contacts}
+          opportunities={opportunities}
+          prefillSubject={modal.prefill}
+          initialCompany={modal.company}
+          onSaveDraft={(draft) => {
+            setOutreachRows(prev => [
+              { company: draft.company, contact: draft.contact, subject: draft.subject, channel: 'Email', status: 'Draft ready', updated: 'Just now' },
+              ...prev.filter(r => r.company !== draft.company || r.subject !== draft.subject)
+            ]);
+            notify(`Outreach draft for ${draft.company} approved & saved to queue.`);
+            setModal(null);
+          }}
+          notify={notify}
+        />
+      ) : modal && (
+        <Modal modal={modal} onClose={() => setModal(null)} onNotify={notify} onCreate={(m: any) => {
+          if (m.type === 'campaign') {
+            setCampaigns(prev => [{ name: m.name || 'New sales campaign', audience: m.audience || 'Custom audience', sent: 0, replies: 0, status: 'Draft', next: 'Not scheduled' }, ...prev]);
+            notify('Campaign draft created');
+          } else if (m.type === 'contact') {
+            handleCreateContact(m);
+          } else if (m.type === 'opportunity') {
+            handleCreateOpportunity(m);
+          }
+          setModal(null);
+        }} />
+      )}
       {detail && (
         <DetailDrawer
           item={detail}
