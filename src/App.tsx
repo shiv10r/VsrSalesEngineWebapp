@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { SignIn } from './components/screens/SignIn';
 import { DraftComposerModal } from './components/DraftComposerModal';
+import { ComplianceGateModal } from './components/ComplianceGateModal';
 import { api } from './services/api';
 import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from './types';
 
@@ -190,6 +191,37 @@ export function App() {
     notify('Suppression removed.');
   };
 
+  const [selectedGateCampaign, setSelectedGateCampaign] = useState<Campaign | null>(null);
+
+  const loadCampaigns = async () => {
+    try {
+      const data = await api.getCampaigns();
+      if (data && data.length > 0) {
+        setCampaigns(data);
+      }
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleToggleCampaignStatus = async (c: Campaign) => {
+    const newStatus = c.status === 'Active' ? 'Paused' : 'Active';
+    try {
+      if (c.id) {
+        const updated = await api.updateCampaignStatus(c.id, newStatus);
+        if (updated) {
+          setCampaigns(prev => prev.map(item => item.id === c.id ? { ...item, status: updated.status } : item));
+          notify(`Campaign '${c.name}' is now ${newStatus}`);
+          return;
+        }
+      }
+      setCampaigns(prev => prev.map(item => item.name === c.name ? { ...item, status: newStatus } : item));
+      notify(`Campaign '${c.name}' is now ${newStatus} (local)`);
+    } catch (ex: any) {
+      notify(`Cannot activate campaign: ${ex.message}`);
+    }
+  };
+
   const loadSourcesAndProfiles = async () => {
     try {
       const [srcData, profData] = await Promise.all([
@@ -208,6 +240,9 @@ export function App() {
     if (page === 'Outreach') {
       loadSinkMessages();
       loadSuppressions();
+    }
+    if (page === 'Campaigns') {
+      loadCampaigns();
     }
   }, [page]);
 
@@ -539,6 +574,20 @@ export function App() {
           onNotify={notify}
           onStatusChange={handleStatusChange}
           onArchive={handleArchive}
+        />
+      )}
+      {selectedGateCampaign && (
+        <ComplianceGateModal
+          isOpen={!!selectedGateCampaign}
+          onClose={() => setSelectedGateCampaign(null)}
+          campaign={selectedGateCampaign}
+          onUpdateMode={async (id, mode) => {
+            const updated = await api.updateCampaignMode(id, mode);
+            if (updated) {
+              setCampaigns(prev => prev.map(c => c.id === id ? { ...c, mode: updated.mode } : c));
+            }
+          }}
+          notify={notify}
         />
       )}
       {toast && <div className="toast"><CheckCircle2 size={17} />{toast}</div>}
@@ -1096,21 +1145,36 @@ export function App() {
     if (page === 'Campaigns') {
       return (
         <>
-          {pageHeading('Campaigns', 'Organize outreach sequences with transparent limits and stop conditions.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'campaign' })}>Create campaign</Button>, 'OUTREACH MANAGEMENT')}
+          {pageHeading('Campaigns & Sequence Controls', 'Organize outreach sequences with transparent limits, stop conditions, and compliance gate verification.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'campaign' })}>Create campaign</Button>, 'OUTREACH MANAGEMENT')}
           <div className="campaign-cards">
             {campaigns.map(c => (
-              <section className="panel campaign-card" key={c.name}>
-                <Pill type={c.status === 'Active' ? 'green' : c.status === 'Paused' ? 'amber' : 'blue'} dot>{c.status}</Pill>
-                <h3>{c.name}</h3>
-                <p>{c.audience}</p>
+              <section className="panel campaign-card" key={c.id || c.name} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Pill type={c.status === 'Active' ? 'green' : c.status === 'Paused' ? 'amber' : 'neutral'} dot>{c.status}</Pill>
+                  <span style={{ fontSize: '0.72rem', background: 'var(--bg)', padding: '2px 6px', borderRadius: 4, fontWeight: 500, color: 'var(--primary)' }}>
+                    {c.mode === 'AutoSendWithinRules' ? '⚡ Auto-send' : c.mode === 'ApprovalRequired' ? '👁 Approval required' : '✍ Draft only'}
+                  </span>
+                </div>
+                <h3 style={{ margin: '4px 0 0' }}>{c.name}</h3>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>{c.audience}</p>
                 <div className="campaign-stats">
                   <div><small>Messages sent</small><strong>{c.sent}</strong></div>
                   <div><small>Replies</small><strong>{c.replies}</strong></div>
                   <div><small>Reply rate</small><strong>{c.sent ? Math.round(c.replies / c.sent * 100) + '%' : '—'}</strong></div>
                 </div>
-                <div className="campaign-actions">
-                  <Button small onClick={() => setModal({ type: 'compose', prefill: `Campaign: ${c.name}` })}>Review sequence</Button>
-                  <Button small variant="primary" onClick={() => notify(`${c.name} status updated`)}>{c.status === 'Active' ? 'Pause' : 'Open'}</Button>
+
+                <div style={{ background: 'var(--bg)', padding: '8px', borderRadius: 6, fontSize: '0.72rem', display: 'flex', justifyContent: 'space-between', color: '#6b7280' }}>
+                  <span>Daily Cap: <b>{c.dailySendLimit || 25}</b></span>
+                  <span>Touches: <b>{c.maxTouches || 3} max</b></span>
+                  <span>Delay: <b>{c.delayDaysBetweenTouches || 3}d</b></span>
+                </div>
+
+                <div className="campaign-actions" style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <Button small icon={ShieldCheck} onClick={() => setSelectedGateCampaign(c)}>Check Gate</Button>
+                  <Button small onClick={() => setModal({ type: 'compose', prefill: `Campaign: ${c.name}` })}>Sequence</Button>
+                  <Button small variant={c.status === 'Active' ? 'secondary' : 'primary'} onClick={() => handleToggleCampaignStatus(c)}>
+                    {c.status === 'Active' ? 'Pause' : 'Activate'}
+                  </Button>
                 </div>
               </section>
             ))}
