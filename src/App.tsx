@@ -8,7 +8,7 @@ import {
   RefreshCw, Search, Send, Settings, ShieldAlert, ShieldCheck, SlidersHorizontal,
   Sparkles, Target, Users, Workflow, X, Zap, ChartNoAxesCombined,
   Building2, CheckCheck, Pencil, TriangleAlert, CalendarDays, Info, Sun, Server,
-  KeyRound, Database, Code2
+  KeyRound, Database, Code2, MapPin, ExternalLink
 } from 'lucide-react';
 import { SignIn } from './components/screens/SignIn';
 import { DraftComposerModal } from './components/DraftComposerModal';
@@ -2107,124 +2107,311 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
   const [quietEnd, setQuietEnd] = useState('06:00');
   const [timezone, setTimezone] = useState('UTC');
 
+  // AI Form Assistant State
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const handleAiAutoFill = async (overridePrompt?: string) => {
+    const promptText = (overridePrompt || aiPrompt).trim();
+    if (!promptText) return;
+    setIsAiLoading(true);
+    try {
+      const result = await api.parseAiFormPrompt(modal.type, promptText);
+      if (modal.type === 'opportunity' && result?.opportunity) {
+        if (result.opportunity.company) setName(result.opportunity.company);
+        if (result.opportunity.title) setSecondary(result.opportunity.title);
+        if (result.opportunity.source) setSource(result.opportunity.source);
+        if (result.opportunity.location) setLocation(result.opportunity.location);
+        if (result.opportunity.fitRating) setFit(result.opportunity.fitRating);
+        if (result.opportunity.opportunityType) setType(result.opportunity.opportunityType);
+        if (result.opportunity.sourceUrl) setSourceUrl(result.opportunity.sourceUrl);
+        if (result.opportunity.evidenceSnippet) setEvidenceSnippet(result.opportunity.evidenceSnippet);
+        if (result.opportunity.requiresVendorDocs !== undefined) setDocs(result.opportunity.requiresVendorDocs);
+        if (result.opportunity.vendorRequirementNotes) setVendorRequirementNotes(result.opportunity.vendorRequirementNotes);
+        onNotify('✨ Gemini AI auto-filled opportunity fields');
+      } else if (modal.type === 'contact' && result?.contact) {
+        if (result.contact.name) setName(result.contact.name);
+        if (result.contact.company) setSecondary(result.contact.company);
+        if (result.contact.role) setContactRole(result.contact.role);
+        if (result.contact.email) setContactEmail(result.contact.email);
+        if (result.contact.source) setSource(result.contact.source);
+        if (result.contact.channelBasis) setChannelBasis(result.contact.channelBasis);
+        if (result.contact.sourceUrl) setSourceUrl(result.contact.sourceUrl);
+        if (result.contact.notes) setContactNotes(result.contact.notes);
+        onNotify('✨ Gemini AI auto-filled contact fields');
+      } else if (modal.type === 'campaign' && result?.campaign) {
+        if (result.campaign.name) setName(result.campaign.name);
+        if (result.campaign.audience) setSecondary(result.campaign.audience);
+        onNotify('✨ Gemini AI auto-filled campaign details');
+      }
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const samplePrompts = modal.type === 'opportunity' ? [
+    'Sr .NET Lead at Microsoft India, high fit, vendor docs needed',
+    'Legacy modernization partner for CloudHarbor Labs Bengaluru',
+    'React frontend contractor for Northstar Digital Remote'
+  ] : modal.type === 'contact' ? [
+    'Maya Patel, Engineering Manager at Northstar Digital, maya.patel@northstar.com',
+    'Arjun Mehta, Talent Partner at BrightPath Health, arjun.mehta@brightpath.com'
+  ] : modal.type === 'campaign' ? [
+    'Healthcare CTOs for .NET Cloud Migration',
+    'BFSI Engineering Partners in India and APAC'
+  ] : [];
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-box modal-card" onClick={e => e.stopPropagation()}>
+      <div className="modal-box modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '620px' }}>
         <div className="modal-header">
-          <h3>{modal.type === 'campaign' ? 'Create Sales Campaign' : modal.type === 'contact' ? 'Add Contact' : modal.type === 'opportunity' ? 'Add Opportunity' : modal.type === 'schedule' ? 'New Automation Schedule' : 'Information'}</h3>
-          <button className="icon-button" onClick={onClose}><X size={16} /></button>
+          <div>
+            <div className="ai-assistant-badge" style={{ marginBottom: '4px' }}>
+              <Sparkles size={11} /> Smart Form System
+            </div>
+            <h3>
+              {modal.type === 'campaign' ? 'Create Sales Campaign' :
+               modal.type === 'contact' ? 'Add Contact' :
+               modal.type === 'opportunity' ? 'Add Opportunity' :
+               modal.type === 'schedule' ? 'New Automation Schedule' : 'Information'}
+            </h3>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Close modal"><X size={16} /></button>
         </div>
         <div className="modal-body">
+          {modal.type !== 'help' && (
+            <div className="ai-form-assistant">
+              <div className="ai-assistant-header">
+                <span className="ai-assistant-badge">
+                  <Sparkles size={12} /> Gemini 2.5 Flash Form Assistant
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Auto-generates structured fields</span>
+              </div>
+              <div className="ai-assistant-row">
+                <input
+                  className="ai-assistant-input"
+                  value={aiPrompt}
+                  onChange={e => setAiPrompt(e.target.value)}
+                  placeholder={
+                    modal.type === 'opportunity' ? 'Describe opportunity or paste job snippet...' :
+                    modal.type === 'contact' ? 'Paste email signature, directory text or card info...' :
+                    modal.type === 'campaign' ? 'Describe campaign target market or pitch goal...' :
+                    'Describe your requirements...'
+                  }
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAiAutoFill(); } }}
+                />
+                <button
+                  type="button"
+                  className="ai-assistant-btn"
+                  onClick={() => handleAiAutoFill()}
+                  disabled={isAiLoading || !aiPrompt.trim()}
+                >
+                  <Sparkles size={13} /> {isAiLoading ? 'Synthesizing...' : 'AI Auto-Fill'}
+                </button>
+              </div>
+              {samplePrompts.length > 0 && (
+                <div className="ai-prompt-samples">
+                  <span className="ai-sample-label">Try sample:</span>
+                  {samplePrompts.map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="ai-sample-chip"
+                      onClick={() => {
+                        setAiPrompt(p);
+                        handleAiAutoFill(p);
+                      }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {modal.type === 'campaign' && (
             <>
-              <label className="field-label">Campaign Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. .NET API Modernization" /></label>
-              <label className="field-label">Target Audience<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Healthcare CTOs" /></label>
+              <div className="form-section-divider">Campaign Parameters</div>
+              <div className="form-group">
+                <label className="form-label"><span>Campaign Name <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. .NET API Modernization" />
+              </div>
+              <div className="form-group">
+                <label className="form-label"><span>Target Audience <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Healthcare CTOs · India + Global" />
+              </div>
             </>
           )}
+
           {modal.type === 'schedule' && (
             <>
-              <label className="field-label">Schedule Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Daily Careers & Feeds Scan" /></label>
-              <label className="field-label">Description<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Automated recurring discovery for .NET and full-stack positions" /></label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Frequency
-                  <select value={frequency} onChange={e => setFrequency(e.target.value)}>
+              <div className="form-section-divider">Schedule Configuration</div>
+              <div className="form-group">
+                <label className="form-label"><span>Schedule Name <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Daily Careers & Feeds Scan" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <input className="form-input" value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Automated recurring discovery for .NET positions" />
+              </div>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Frequency</label>
+                  <select className="form-select" value={frequency} onChange={e => setFrequency(e.target.value)}>
                     <option value="Daily">Daily</option>
                     <option value="Weekdays">Weekdays</option>
                     <option value="Weekly">Weekly</option>
                   </select>
-                </label>
-                <label className="field-label">Run Cap
-                  <input type="number" value={runCap} onChange={e => setRunCap(Number(e.target.value))} min={5} max={500} />
-                </label>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Run Cap (Requests/Run)</label>
+                  <input className="form-input" type="number" value={runCap} onChange={e => setRunCap(Number(e.target.value))} min={5} max={500} />
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Quiet Hours Start
-                  <input value={quietStart} onChange={e => setQuietStart(e.target.value)} placeholder="22:00" />
-                </label>
-                <label className="field-label">Quiet Hours End
-                  <input value={quietEnd} onChange={e => setQuietEnd(e.target.value)} placeholder="06:00" />
-                </label>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Quiet Hours Start</label>
+                  <input className="form-input" value={quietStart} onChange={e => setQuietStart(e.target.value)} placeholder="22:00" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Quiet Hours End</label>
+                  <input className="form-input" value={quietEnd} onChange={e => setQuietEnd(e.target.value)} placeholder="06:00" />
+                </div>
               </div>
-              <label className="field-label">Timezone
-                <input value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="UTC" />
-              </label>
+              <div className="form-group">
+                <label className="form-label">Timezone</label>
+                <input className="form-input" value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="UTC" />
+              </div>
             </>
           )}
+
           {modal.type === 'contact' && (
             <>
-              <label className="field-label">Full Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Maya Patel" /></label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Company<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Northstar Digital" /></label>
-                <label className="field-label">Role<input value={contactRole} onChange={e => setContactRole(e.target.value)} placeholder="e.g. Engineering Manager" /></label>
+              <div className="form-section-divider">Contact Identity</div>
+              <div className="form-group">
+                <label className="form-label"><span>Full Name <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Maya Patel" />
               </div>
-              <label className="field-label">Email Address<input value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="e.g. maya.patel@example.com" /></label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Source
-                  <select value={source} onChange={e => setSource(e.target.value)}>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label"><span>Company <span className="form-label-required">*</span></span></label>
+                  <input className="form-input" value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Northstar Digital" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Role / Job Title</label>
+                  <input className="form-input" value={contactRole} onChange={e => setContactRole(e.target.value)} placeholder="e.g. Engineering Manager" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label"><span>Email Address <span className="form-label-required">*</span></span></label>
+                <input className="form-input" type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="e.g. maya.patel@example.com" />
+              </div>
+              <div className="form-section-divider">Channel & Provenance</div>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Source</label>
+                  <select className="form-select" value={source} onChange={e => setSource(e.target.value)}>
                     <option value="Company careers">Company careers</option>
                     <option value="Public directory">Public directory</option>
                     <option value="Direct research">Direct research</option>
                     <option value="Public procurement">Public procurement</option>
                     <option value="Manual entry">Manual entry</option>
                   </select>
-                </label>
-                <label className="field-label">Channel Basis
-                  <select value={channelBasis} onChange={e => setChannelBasis(e.target.value)}>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Channel Basis</label>
+                  <select className="form-select" value={channelBasis} onChange={e => setChannelBasis(e.target.value)}>
                     <option value="ExplicitBusinessContact">Explicit Business Contact</option>
                     <option value="PublicDirectory">Public Directory</option>
                     <option value="ManualHandoff">Manual Handoff</option>
                   </select>
-                </label>
+                </div>
               </div>
-              <label className="field-label">Source URL<input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://example.com/team" /></label>
-              <label className="field-label">Verification / Provenance Notes<input value={contactNotes} onChange={e => setContactNotes(e.target.value)} placeholder="Publicly listed on corporate site." /></label>
+              <div className="form-group">
+                <label className="form-label">Source URL</label>
+                <input className="form-input" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://example.com/team" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Verification / Provenance Notes</label>
+                <input className="form-input" value={contactNotes} onChange={e => setContactNotes(e.target.value)} placeholder="Publicly listed on corporate team page." />
+              </div>
             </>
           )}
+
           {modal.type === 'opportunity' && (
             <>
-              <label className="field-label">Company<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Northstar Digital" /></label>
-              <label className="field-label">Role / Requirement Title<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Contract Senior .NET Engineer" /></label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Source
-                  <select value={source} onChange={e => setSource(e.target.value)}>
+              <div className="form-section-divider">Role & Opportunity Identity</div>
+              <div className="form-group">
+                <label className="form-label"><span>Company Name <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Microsoft / Northstar Digital" />
+              </div>
+              <div className="form-group">
+                <label className="form-label"><span>Role / Requirement Title <span className="form-label-required">*</span></span></label>
+                <input className="form-input" value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Contract Senior .NET Cloud Engineer" />
+              </div>
+              <div className="form-section-divider">Classification & Targeting</div>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Source Channel</label>
+                  <select className="form-select" value={source} onChange={e => setSource(e.target.value)}>
                     <option value="Company careers">Company careers</option>
                     <option value="Public job board">Public job board</option>
                     <option value="Direct research">Direct research</option>
                     <option value="Public procurement">Public procurement</option>
                     <option value="Approved feed">Approved feed</option>
                   </select>
-                </label>
-                <label className="field-label">Location<input value={location} onChange={e => setLocation(e.target.value)} placeholder="Bengaluru, India / Remote" /></label>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Location</label>
+                  <input className="form-input" value={location} onChange={e => setLocation(e.target.value)} placeholder="Bengaluru, India / Remote" />
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label className="field-label">Fit Rating
-                  <select value={fit} onChange={e => setFit(e.target.value)}>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Fit Rating</label>
+                  <select className="form-select" value={fit} onChange={e => setFit(e.target.value)}>
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
                     <option value="Low">Low</option>
                   </select>
-                </label>
-                <label className="field-label">Opportunity Type
-                  <select value={type} onChange={e => setType(e.target.value)}>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Opportunity Type</label>
+                  <select className="form-select" value={type} onChange={e => setType(e.target.value)}>
                     <option value="Individual developer">Individual developer</option>
                     <option value="Company/vendor">Company/vendor</option>
                     <option value="Direct project">Direct project</option>
                   </select>
-                </label>
+                </div>
               </div>
-              <label className="field-label">Source URL<input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://careers.example.com/job" /></label>
-              <label className="field-label">Captured Evidence Snippet<textarea rows={2} value={evidenceSnippet} onChange={e => setEvidenceSnippet(e.target.value)} placeholder="Raw text evidence from source posting..." style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)' }} /></label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', marginTop: '4px' }}>
+              <div className="form-section-divider">Verification & Sourcing</div>
+              <div className="form-group">
+                <label className="form-label">Source URL</label>
+                <input className="form-input" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://careers.example.com/job" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Captured Evidence Snippet</label>
+                <textarea className="form-textarea" rows={2} value={evidenceSnippet} onChange={e => setEvidenceSnippet(e.target.value)} placeholder="Raw text evidence from posting..." />
+              </div>
+              <div className="form-section-divider">Vendor Procurement Gate</div>
+              <label className="form-checkbox-label">
                 <input type="checkbox" checked={docs} onChange={e => setDocs(e.target.checked)} />
                 <span>Requires Vendor Registration / Procurement Documentation</span>
               </label>
               {docs && (
-                <label className="field-label" style={{ marginTop: '8px' }}>Vendor Document Notes<input value={vendorRequirementNotes} onChange={e => setVendorRequirementNotes(e.target.value)} placeholder="e.g. GST registration, ISO certification, vendor portal setup required" /></label>
+                <div className="form-group" style={{ marginTop: '8px' }}>
+                  <label className="form-label">Vendor Documentation Notes</label>
+                  <input className="form-input" value={vendorRequirementNotes} onChange={e => setVendorRequirementNotes(e.target.value)} placeholder="e.g. GST registration, ISO certification, vendor portal setup required" />
+                </div>
               )}
             </>
           )}
+
           {modal.type === 'help' && (
-            <p>Welcome to VSR Sales Engine. Use the left navigation to explore opportunities, build discovery runs, draft outreach, and verify document readiness.</p>
+            <p style={{ lineHeight: 1.6, color: 'var(--text)' }}>
+              Welcome to VSR Sales Engine. Use the left navigation to explore opportunities, build automated discovery runs, draft compliance-verified outreach, and verify vendor readiness documentation.
+            </p>
           )}
         </div>
         <div className="modal-footer">
@@ -2253,7 +2440,9 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
               quietHoursStart: quietStart,
               quietHoursEnd: quietEnd,
               timezone,
-            })}>Create</Button>
+            })}>
+              <Plus size={14} style={{ marginRight: '6px' }} /> Create {modal.type === 'opportunity' ? 'Opportunity' : modal.type === 'contact' ? 'Contact' : modal.type === 'campaign' ? 'Campaign' : 'Schedule'}
+            </Button>
           )}
         </div>
       </div>
@@ -2285,26 +2474,66 @@ function DetailDrawer({
       <div className="detail-drawer" onClick={e => e.stopPropagation()}>
         <div className="drawer-header">
           <div>
-            <div className="eyebrow">{item.id}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span className="eyebrow" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)' }}>{item.id}</span>
+              <Pill type={statusTone(item.status)} dot>{item.status}</Pill>
+            </div>
             <h2>{item.company}</h2>
             <p>{item.title}</p>
           </div>
-          <button className="icon-button" onClick={onClose}><X size={18} /></button>
+          <button className="icon-button" onClick={onClose} aria-label="Close drawer"><X size={18} /></button>
         </div>
-        <div className="drawer-content">
-          <div className="drawer-field"><strong>Source</strong><span>{item.source}</span></div>
-          <div className="drawer-field"><strong>Location</strong><span>{item.location}</span></div>
-          <div className="drawer-field"><strong>Fit Rating</strong><Pill type={item.fit === 'High' ? 'green' : item.fit === 'Medium' ? 'blue' : 'neutral'}>{item.fit}</Pill></div>
-          <div className="drawer-field"><strong>Type</strong><span>{item.type}</span></div>
-          <div className="drawer-field"><strong>Current Status</strong><Pill type={statusTone(item.status)} dot>{item.status}</Pill></div>
 
-          <div style={{ background: 'var(--bg)', padding: '12px', borderRadius: '8px', margin: '12px 0' }}>
-            <strong style={{ display: 'block', fontSize: '11px', marginBottom: '8px', color: 'var(--text)' }}>Pipeline Transition:</strong>
+        <div className="drawer-content">
+          {/* Structured 2-Column Key Details Grid */}
+          <div className="drawer-detail-grid">
+            <div className="drawer-detail-card">
+              <span className="drawer-detail-label">Source</span>
+              <span className="drawer-detail-val">
+                <Globe2 size={13} style={{ color: 'var(--muted)' }} />
+                <span>{item.source}</span>
+              </span>
+            </div>
+            <div className="drawer-detail-card">
+              <span className="drawer-detail-label">Location</span>
+              <span className="drawer-detail-val">
+                <MapPin size={13} style={{ color: 'var(--muted)' }} />
+                <span>{item.location}</span>
+              </span>
+            </div>
+            <div className="drawer-detail-card">
+              <span className="drawer-detail-label">Fit Rating</span>
+              <span className="drawer-detail-val">
+                <Pill type={item.fit === 'High' ? 'green' : item.fit === 'Medium' ? 'blue' : 'neutral'}>{item.fit}</Pill>
+              </span>
+            </div>
+            <div className="drawer-detail-card">
+              <span className="drawer-detail-label">Opportunity Type</span>
+              <span className="drawer-detail-val">
+                <Building2 size={13} style={{ color: 'var(--muted)' }} />
+                <span>{item.type}</span>
+              </span>
+            </div>
+            <div className="drawer-detail-card" style={{ gridColumn: 'span 2' }}>
+              <span className="drawer-detail-label">Current Status</span>
+              <span className="drawer-detail-val">
+                <Pill type={statusTone(item.status)} dot>{item.status}</Pill>
+              </span>
+            </div>
+          </div>
+
+          {/* Pipeline Lifecycle & Status Transition Card */}
+          <div className="drawer-pipeline-card">
+            <div className="drawer-pipeline-header">
+              <span className="drawer-pipeline-title">Pipeline Stage Transition</span>
+              <Pill type={statusTone(item.status)} dot>{item.status}</Pill>
+            </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select
                 value={selectedStatus}
                 onChange={e => setSelectedStatus(e.target.value)}
-                style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px' }}
+                className="form-select"
+                style={{ flex: 1, height: '36px', fontSize: '12px' }}
               >
                 {statuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -2321,54 +2550,75 @@ function DetailDrawer({
                   }
                 }}
               >
-                Update
+                {isUpdating ? 'Updating...' : 'Update Stage'}
               </Button>
             </div>
             {selectedStatus !== item.status && (
               <input
                 value={reason}
                 onChange={e => setReason(e.target.value)}
-                placeholder="Reason or audit note (optional)..."
-                style={{ marginTop: '8px', width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px' }}
+                placeholder="Audit transition note / rationale (optional)..."
+                className="form-input"
+                style={{ marginTop: '8px', height: '34px', fontSize: '11px' }}
               />
             )}
           </div>
 
+          {/* Sourcing Link Card */}
           {item.sourceUrl && (
-            <div className="drawer-field">
-              <strong>Source URL</strong>
-              <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-link"><Globe2 size={13} /> {item.sourceUrl}</a>
+            <div className="drawer-evidence-card" style={{ borderLeftColor: '#0ea5e9' }}>
+              <strong>Verified Sourcing URL</strong>
+              <a
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-link"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', marginTop: '4px' }}
+              >
+                <Globe2 size={13} /> {item.sourceUrl} <ExternalLink size={12} />
+              </a>
             </div>
           )}
+
+          {/* Captured Evidence Box */}
           {item.evidenceSnippet && (
-            <div className="drawer-field evidence-box">
-              <strong>Captured Evidence</strong>
-              <p>{item.evidenceSnippet}</p>
+            <div className="drawer-evidence-card">
+              <strong>Captured Source Evidence</strong>
+              <p>"{item.evidenceSnippet}"</p>
             </div>
           )}
+
+          {/* Vendor Readiness Callout Banner */}
           {item.docs && (
-            <div className="readiness-callout">
-              <ShieldAlert size={16} />
+            <div className="drawer-readiness-banner">
+              <ShieldAlert size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <strong>Vendor document requirement detected</strong>
-                <p>{item.vendorRequirementNotes || 'Review supplier requirements in the Vendor Readiness queue.'}</p>
+                <strong style={{ display: 'block', fontSize: '12px', marginBottom: '2px' }}>Vendor Document Requirement Detected</strong>
+                <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.5 }}>
+                  {item.vendorRequirementNotes || 'Review supplier compliance documents and GST/MSME verification packs in Vendor Readiness.'}
+                </p>
               </div>
             </div>
           )}
 
+          {/* Status Audit Trail */}
           {item.statusHistory && item.statusHistory.length > 0 && (
-            <div style={{ marginTop: '16px', borderTop: '1px solid var(--line)', paddingTop: '12px' }}>
-              <strong style={{ display: 'block', fontSize: '11px', marginBottom: '8px', color: 'var(--text)' }}>Status Audit Trail ({item.statusHistory.length})</strong>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ marginTop: '20px', borderTop: '1px solid var(--line)', paddingTop: '16px' }}>
+              <strong style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '10px' }}>
+                Status Audit Trail ({item.statusHistory.length})
+              </strong>
+              <div className="timeline-list">
                 {item.statusHistory.map((h, i) => (
-                  <div key={i} style={{ fontSize: '11px', background: 'var(--bg)', padding: '8px', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}>
-                      <span><strong>{h.fromStatus}</strong> → <strong>{h.toStatus}</strong></span>
-                      <small>{new Date(h.changedAtUtc).toLocaleString()}</small>
-                    </div>
-                    <div style={{ marginTop: '4px', color: 'var(--text)' }}>
-                      <span>By: {h.changedBy}</span>
-                      {h.reason && <span style={{ marginLeft: '8px', fontStyle: 'italic', color: 'var(--muted)' }}>"{h.reason}"</span>}
+                  <div key={i} className="timeline-item">
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', fontSize: '10px' }}>
+                        <span><strong>{h.fromStatus}</strong> → <strong>{h.toStatus}</strong></span>
+                        <span>{new Date(h.changedAtUtc).toLocaleString()}</span>
+                      </div>
+                      <div style={{ marginTop: '4px', color: 'var(--text)', fontSize: '11px' }}>
+                        <span>By: <strong>{h.changedBy}</strong></span>
+                        {h.reason && <span style={{ marginLeft: '8px', fontStyle: 'italic', color: 'var(--muted)' }}>"{h.reason}"</span>}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -2376,10 +2626,13 @@ function DetailDrawer({
             </div>
           )}
         </div>
+
         <div className="drawer-footer">
           <Button variant="secondary" onClick={() => onArchive(item)}>Archive</Button>
           <Button onClick={onClose}>Close</Button>
-          <Button variant="primary" onClick={() => { onNotify('Outreach draft created from opportunity'); onClose(); }}>Prepare outreach draft</Button>
+          <Button variant="primary" onClick={() => { onNotify('Outreach draft created from opportunity'); onClose(); }}>
+            <Send size={14} style={{ marginRight: '6px' }} /> Prepare outreach draft
+          </Button>
         </div>
       </div>
     </div>
