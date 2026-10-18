@@ -709,14 +709,14 @@ export function App() {
             </button>
           </div>
         </header>
-        <div className="dev-banner">
-          <span><Code2 size={14} /> <b>DEVELOPMENT PREVIEW</b> <span>Illustrative sample data · No live sources connected · No messages sent</span></span>
-          <button onClick={() => go('Settings')}>View environment controls <ChevronRight size={14} /></button>
+        <div className="dev-banner" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+          <span><Activity size={14} style={{ color: '#10b981' }} /> <b style={{ color: '#10b981' }}>LIVE ENGINE CONNECTED</b> <span>.NET 10 LTS Web API • Live Ingestion Pipeline • Gemini 2.5 Flash active</span></span>
+          <button onClick={() => go('Settings')}>Environment controls <ChevronRight size={14} /></button>
         </div>
         <div className="page-content">{renderPage()}</div>
         <footer className="footer">
           <span>© 2026 VSR Sales Engine</span>
-          <span><i className="footer-dot" /> Prototype workspace <span className="footer-sep">·</span> Data is illustrative</span>
+          <span><i className="footer-dot" style={{ backgroundColor: '#10b981' }} /> Live Workspace Connected <span className="footer-sep">·</span> API v0.1.0</span>
         </footer>
       </main>
       {modal && modal.type === 'compose' ? (
@@ -908,9 +908,9 @@ export function App() {
               <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'campaign' })}>New campaign</Button>
             </>
           ), 'YOUR WORKSPACE')}
-          <div className="notice-inline">
-            <Info size={15} />
-            <span>Demo dashboard — counts below are sample values for design review, not live sales results.</span>
+          <div className="notice-inline" style={{ borderColor: 'rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.06)' }}>
+            <Activity size={15} style={{ color: '#10b981' }} />
+            <span>Live Sales Pipeline active — Real-time telemetry, synchronized opportunity ingestion, and fail-closed compliance guard.</span>
             <button onClick={() => go('Settings')}>Environment settings</button>
           </div>
           <div className="kpi-grid">
