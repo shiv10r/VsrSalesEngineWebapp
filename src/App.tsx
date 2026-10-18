@@ -91,19 +91,99 @@ export function App() {
   const [settingsTab, setSettingsTab] = useState('General');
   const [dark, setDark] = useState(false);
 
-  useEffect(() => {
-    // Attempt to load opportunities from backend API if available
-    api.getOpportunities().then(data => {
+  const loadOpportunities = async () => {
+    try {
+      const data = await api.getOpportunities({
+        query,
+        status: statusFilter,
+        source: sourceFilter,
+      });
       if (data && data.length > 0) {
         setOpportunities(data);
       }
-    });
-  }, [page]);
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    loadOpportunities();
+  }, [page, statusFilter, sourceFilter]);
 
   const notify = (msg: string) => {
     setToast(msg);
     window.clearTimeout((window as any).__vsrToastTimer);
     (window as any).__vsrToastTimer = window.setTimeout(() => setToast(''), 3000);
+  };
+
+  const handleCreateOpportunity = async (payload: any) => {
+    const created = await api.createOpportunity({
+      company: payload.company || 'New company',
+      title: payload.title || 'Opportunity to qualify',
+      source: payload.source || 'Company careers',
+      location: payload.location || 'Remote · India',
+      fit: payload.fit || 'High',
+      type: payload.type || 'Individual developer',
+      hasVendorDocRequirements: !!payload.docs,
+      vendorRequirementNotes: payload.vendorRequirementNotes,
+      sourceUrl: payload.sourceUrl,
+      evidenceSnippet: payload.evidenceSnippet,
+    });
+    if (created) {
+      setOpportunities(prev => [created, ...prev.filter(x => x.id !== created.id)]);
+      notify(`Opportunity ${created.id} saved to server`);
+    } else {
+      const fallback: Opportunity = {
+        id: `OP-${1050 + opportunities.length}`,
+        company: payload.company || 'New company',
+        title: payload.title || 'Opportunity to qualify',
+        source: payload.source || 'Manually added',
+        location: payload.location || 'Remote · India',
+        found: 'Just now',
+        status: 'New',
+        fit: payload.fit || 'High',
+        type: payload.type || 'Individual developer',
+        docs: !!payload.docs,
+        sourceUrl: payload.sourceUrl,
+        evidenceSnippet: payload.evidenceSnippet,
+      };
+      setOpportunities(prev => [fallback, ...prev]);
+      notify('Opportunity added to review queue');
+    }
+  };
+
+  const handleStatusChange = async (item: Opportunity, newStatus: string, reason?: string) => {
+    const updated = await api.updateOpportunityStatus(item.id, newStatus, reason);
+    if (updated) {
+      setOpportunities(prev => prev.map(o => o.id === item.id ? updated : o));
+      setDetail(updated);
+      notify(`Status transitioned to ${newStatus}`);
+    } else {
+      const fallback: Opportunity = {
+        ...item,
+        status: newStatus,
+        statusHistory: [
+          ...(item.statusHistory || []),
+          {
+            fromStatus: item.status,
+            toStatus: newStatus,
+            changedBy: userEmail || 'Sales Member',
+            reason: reason || 'Status transition in UI',
+            changedAtUtc: new Date().toISOString(),
+          }
+        ]
+      };
+      setOpportunities(prev => prev.map(o => o.id === item.id ? fallback : o));
+      setDetail(fallback);
+      notify(`Status transitioned to ${newStatus} (local)`);
+    }
+  };
+
+  const handleArchive = async (item: Opportunity) => {
+    await api.archiveOpportunity(item.id);
+    setOpportunities(prev => prev.filter(o => o.id !== item.id));
+    setDetail(null);
+    notify(`Opportunity ${item.id} archived`);
   };
 
   const go = (next: string) => { setPage(next); setMobileNav(false); setGlobalSearch(''); };
@@ -212,12 +292,19 @@ export function App() {
           setContacts(prev => [{ name: m.name || 'New contact', company: m.company || 'Unassigned', role: m.role || 'Not specified', email: m.email || 'Not provided', source: 'Manually added', status: 'Not contacted' }, ...prev]);
           notify('Contact added');
         } else if (m.type === 'opportunity') {
-          setOpportunities(prev => [{ id: `OP-${1050 + prev.length}`, company: m.company || 'New company', title: m.title || 'Opportunity to qualify', source: 'Manually added', location: m.location || 'Not specified', found: 'Just now', status: 'New', fit: 'Unrated', type: 'Direct project', docs: false }, ...prev]);
-          notify('Opportunity added to review queue');
+          handleCreateOpportunity(m);
         }
         setModal(null);
       }} />}
-      {detail && <DetailDrawer item={detail} onClose={() => setDetail(null)} onNotify={notify} />}
+      {detail && (
+        <DetailDrawer
+          item={detail}
+          onClose={() => setDetail(null)}
+          onNotify={notify}
+          onStatusChange={handleStatusChange}
+          onArchive={handleArchive}
+        />
+      )}
       {toast && <div className="toast"><CheckCircle2 size={17} />{toast}</div>}
     </div>
   );
@@ -880,10 +967,18 @@ function LineChart() {
 function Modal({ modal, onClose, onNotify, onCreate }: any) {
   const [name, setName] = useState('');
   const [secondary, setSecondary] = useState('');
+  const [source, setSource] = useState('Company careers');
+  const [location, setLocation] = useState('Remote · India');
+  const [fit, setFit] = useState('High');
+  const [type, setType] = useState('Individual developer');
+  const [docs, setDocs] = useState(false);
+  const [vendorRequirementNotes, setVendorRequirementNotes] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [evidenceSnippet, setEvidenceSnippet] = useState('');
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-box">
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{modal.type === 'campaign' ? 'Create Sales Campaign' : modal.type === 'contact' ? 'Add Contact' : modal.type === 'opportunity' ? 'Add Opportunity' : 'Information'}</h3>
           <button className="icon-button" onClick={onClose}><X size={16} /></button>
@@ -903,8 +998,45 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
           )}
           {modal.type === 'opportunity' && (
             <>
-              <label className="field-label">Company<input value={name} onChange={e => setName(e.target.value)} placeholder="Company Name" /></label>
-              <label className="field-label">Title<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="Contract Senior Developer" /></label>
+              <label className="field-label">Company<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Northstar Digital" /></label>
+              <label className="field-label">Role / Requirement Title<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Contract Senior .NET Engineer" /></label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Source
+                  <select value={source} onChange={e => setSource(e.target.value)}>
+                    <option value="Company careers">Company careers</option>
+                    <option value="Public job board">Public job board</option>
+                    <option value="Direct research">Direct research</option>
+                    <option value="Public procurement">Public procurement</option>
+                    <option value="Approved feed">Approved feed</option>
+                  </select>
+                </label>
+                <label className="field-label">Location<input value={location} onChange={e => setLocation(e.target.value)} placeholder="Bengaluru, India / Remote" /></label>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Fit Rating
+                  <select value={fit} onChange={e => setFit(e.target.value)}>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </label>
+                <label className="field-label">Opportunity Type
+                  <select value={type} onChange={e => setType(e.target.value)}>
+                    <option value="Individual developer">Individual developer</option>
+                    <option value="Company/vendor">Company/vendor</option>
+                    <option value="Direct project">Direct project</option>
+                  </select>
+                </label>
+              </div>
+              <label className="field-label">Source URL<input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://careers.example.com/job" /></label>
+              <label className="field-label">Captured Evidence Snippet<textarea rows={2} value={evidenceSnippet} onChange={e => setEvidenceSnippet(e.target.value)} placeholder="Raw text evidence from source posting..." style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)' }} /></label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', marginTop: '4px' }}>
+                <input type="checkbox" checked={docs} onChange={e => setDocs(e.target.checked)} />
+                <span>Requires Vendor Registration / Procurement Documentation</span>
+              </label>
+              {docs && (
+                <label className="field-label" style={{ marginTop: '8px' }}>Vendor Document Notes<input value={vendorRequirementNotes} onChange={e => setVendorRequirementNotes(e.target.value)} placeholder="e.g. GST registration, ISO certification, vendor portal setup required" /></label>
+              )}
             </>
           )}
           {modal.type === 'help' && (
@@ -914,7 +1046,21 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
         <div className="modal-footer">
           <Button onClick={onClose}>Cancel</Button>
           {modal.type !== 'help' && (
-            <Button variant="primary" onClick={() => onCreate({ type: modal.type, name, company: name, title: secondary, audience: secondary })}>Create</Button>
+            <Button variant="primary" onClick={() => onCreate({
+              type: modal.type,
+              name,
+              company: name,
+              title: secondary,
+              audience: secondary,
+              source,
+              location,
+              fit,
+              opportunityType: type,
+              docs,
+              vendorRequirementNotes,
+              sourceUrl,
+              evidenceSnippet
+            })}>Create</Button>
           )}
         </div>
       </div>
@@ -922,10 +1068,28 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
   );
 }
 
-function DetailDrawer({ item, onClose, onNotify }: { item: Opportunity; onClose: () => void; onNotify: (msg: string) => void }) {
+function DetailDrawer({
+  item,
+  onClose,
+  onNotify,
+  onStatusChange,
+  onArchive
+}: {
+  item: Opportunity;
+  onClose: () => void;
+  onNotify: (msg: string) => void;
+  onStatusChange: (item: Opportunity, newStatus: string, reason?: string) => void;
+  onArchive: (item: Opportunity) => void;
+}) {
+  const [selectedStatus, setSelectedStatus] = useState(item.status);
+  const [reason, setReason] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const statuses = ['New', 'Needs review', 'Qualified', 'Contacted', 'Readiness hold', 'Interested', 'Archived'];
+
   return (
-    <div className="drawer-backdrop">
-      <div className="detail-drawer">
+    <div className="drawer-backdrop" onClick={onClose}>
+      <div className="detail-drawer" onClick={e => e.stopPropagation()}>
         <div className="drawer-header">
           <div>
             <div className="eyebrow">{item.id}</div>
@@ -937,8 +1101,46 @@ function DetailDrawer({ item, onClose, onNotify }: { item: Opportunity; onClose:
         <div className="drawer-content">
           <div className="drawer-field"><strong>Source</strong><span>{item.source}</span></div>
           <div className="drawer-field"><strong>Location</strong><span>{item.location}</span></div>
-          <div className="drawer-field"><strong>Fit Rating</strong><Pill type={item.fit === 'High' ? 'green' : 'blue'}>{item.fit}</Pill></div>
-          <div className="drawer-field"><strong>Status</strong><Pill type={statusTone(item.status)} dot>{item.status}</Pill></div>
+          <div className="drawer-field"><strong>Fit Rating</strong><Pill type={item.fit === 'High' ? 'green' : item.fit === 'Medium' ? 'blue' : 'neutral'}>{item.fit}</Pill></div>
+          <div className="drawer-field"><strong>Type</strong><span>{item.type}</span></div>
+          <div className="drawer-field"><strong>Current Status</strong><Pill type={statusTone(item.status)} dot>{item.status}</Pill></div>
+
+          <div style={{ background: 'var(--bg)', padding: '12px', borderRadius: '8px', margin: '12px 0' }}>
+            <strong style={{ display: 'block', fontSize: '11px', marginBottom: '8px', color: 'var(--text)' }}>Pipeline Transition:</strong>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px' }}
+              >
+                {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <Button
+                small
+                variant="primary"
+                disabled={selectedStatus === item.status || isUpdating}
+                onClick={async () => {
+                  setIsUpdating(true);
+                  try {
+                    await onStatusChange(item, selectedStatus, reason || undefined);
+                  } finally {
+                    setIsUpdating(false);
+                  }
+                }}
+              >
+                Update
+              </Button>
+            </div>
+            {selectedStatus !== item.status && (
+              <input
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="Reason or audit note (optional)..."
+                style={{ marginTop: '8px', width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px' }}
+              />
+            )}
+          </div>
+
           {item.sourceUrl && (
             <div className="drawer-field">
               <strong>Source URL</strong>
@@ -954,11 +1156,35 @@ function DetailDrawer({ item, onClose, onNotify }: { item: Opportunity; onClose:
           {item.docs && (
             <div className="readiness-callout">
               <ShieldAlert size={16} />
-              <div><strong>Vendor document requirement detected</strong><p>Review supplier requirements in the Vendor Readiness queue.</p></div>
+              <div>
+                <strong>Vendor document requirement detected</strong>
+                <p>{item.vendorRequirementNotes || 'Review supplier requirements in the Vendor Readiness queue.'}</p>
+              </div>
+            </div>
+          )}
+
+          {item.statusHistory && item.statusHistory.length > 0 && (
+            <div style={{ marginTop: '16px', borderTop: '1px solid var(--line)', paddingTop: '12px' }}>
+              <strong style={{ display: 'block', fontSize: '11px', marginBottom: '8px', color: 'var(--text)' }}>Status Audit Trail ({item.statusHistory.length})</strong>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {item.statusHistory.map((h, i) => (
+                  <div key={i} style={{ fontSize: '11px', background: 'var(--bg)', padding: '8px', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}>
+                      <span><strong>{h.fromStatus}</strong> → <strong>{h.toStatus}</strong></span>
+                      <small>{new Date(h.changedAtUtc).toLocaleString()}</small>
+                    </div>
+                    <div style={{ marginTop: '4px', color: 'var(--text)' }}>
+                      <span>By: {h.changedBy}</span>
+                      {h.reason && <span style={{ marginLeft: '8px', fontStyle: 'italic', color: 'var(--muted)' }}>"{h.reason}"</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
         <div className="drawer-footer">
+          <Button variant="secondary" onClick={() => onArchive(item)}>Archive</Button>
           <Button onClick={onClose}>Close</Button>
           <Button variant="primary" onClick={() => { onNotify('Outreach draft created from opportunity'); onClose(); }}>Prepare outreach draft</Button>
         </div>
