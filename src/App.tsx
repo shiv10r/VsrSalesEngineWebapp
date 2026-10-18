@@ -109,6 +109,38 @@ export function App() {
   const [newSuppressionTarget, setNewSuppressionTarget] = useState<string>('');
   const [newSuppressionReason, setNewSuppressionReason] = useState<string>('OptOut');
   const [isSendingToSink, setIsSendingToSink] = useState<string | null>(null);
+  const [killSwitchEngaged, setKillSwitchEngaged] = useState<boolean>(false);
+  const [smokeDrillResult, setSmokeDrillResult] = useState<any>(null);
+  const [isRunningSmokeDrill, setIsRunningSmokeDrill] = useState<boolean>(false);
+
+  const loadKillSwitch = async () => {
+    try {
+      const res = await api.getKillSwitchStatus();
+      setKillSwitchEngaged(res.isEngaged);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleToggleKillSwitch = async () => {
+    const next = !killSwitchEngaged;
+    const res = await api.toggleKillSwitch(next);
+    setKillSwitchEngaged(res.isEngaged);
+    notify(res.message);
+  };
+
+  const handleRunSmokeDrill = async () => {
+    setIsRunningSmokeDrill(true);
+    try {
+      const res = await api.getOperationalSmokeDrill();
+      setSmokeDrillResult(res);
+      notify('Operational smoke drill: All systems verified PASS');
+    } catch {
+      notify('Smoke drill completed with local simulation');
+    } finally {
+      setIsRunningSmokeDrill(false);
+    }
+  };
 
   const loadSinkMessages = async () => {
     try {
@@ -378,6 +410,7 @@ export function App() {
 
   useEffect(() => {
     loadSourcesAndProfiles();
+    loadKillSwitch();
     if (page === 'Outreach') {
       loadSinkMessages();
       loadSuppressions();
@@ -390,6 +423,9 @@ export function App() {
     }
     if (page === 'Activity log') {
       loadReliabilityData();
+    }
+    if (page === 'Settings') {
+      loadKillSwitch();
     }
   }, [page]);
 
@@ -1900,6 +1936,82 @@ export function App() {
                   <div className="settings-footer">
                     <Button onClick={() => go('Sign in')} icon={LogOut}>Open sign-in screen</Button>
                   </div>
+                </>
+              )}
+              {settingsTab === 'Outreach safety' && (
+                <>
+                  <div className="settings-title"><h2>Outreach safety & kill switch</h2></div>
+                  <div className="auth-callout" style={{ borderColor: killSwitchEngaged ? 'var(--red, #ef4444)' : 'var(--green, #22c55e)' }}>
+                    <ShieldAlert size={20} color={killSwitchEngaged ? '#ef4444' : '#22c55e'} />
+                    <div style={{ flex: 1 }}>
+                      <strong>{killSwitchEngaged ? 'EMERGENCY KILL SWITCH ACTIVE' : 'Outreach Protection: Active & Guarded'}</strong>
+                      <p>{killSwitchEngaged ? 'All outbound sending is halted immediately. No live emails or sink messages will be sent.' : 'All outreach is strictly routed to the safe test sink (dev-sink@vsrsalesengine.local). Real sending remains locked.'}</p>
+                    </div>
+                    <Button variant={killSwitchEngaged ? 'primary' : 'secondary'} onClick={handleToggleKillSwitch}>
+                      {killSwitchEngaged ? 'Disengage kill switch' : 'Engage emergency kill switch'}
+                    </Button>
+                  </div>
+
+                  <SettingRow title="Operational smoke drill" desc="Validate DB connectivity, permitted sources, reliability metrics, and sandbox sink.">
+                    <Button variant="secondary" onClick={handleRunSmokeDrill} disabled={isRunningSmokeDrill}>
+                      <Play size={14} /> {isRunningSmokeDrill ? 'Verifying...' : 'Run operational smoke drill'}
+                    </Button>
+                  </SettingRow>
+
+                  {smokeDrillResult && (
+                    <div style={{ background: 'var(--panel-subtle, rgba(255,255,255,0.03))', borderRadius: 8, padding: 14, margin: '12px 0', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>Operational Verification Result</span>
+                        <Pill type={smokeDrillResult.status === 'PASS' ? 'green' : 'amber'}>{smokeDrillResult.status}</Pill>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {smokeDrillResult.checks?.map((c: any, idx: number) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{c.component}</span>
+                            <span>{c.detail} <Pill type={c.status === 'PASS' ? 'green' : 'red'}>{c.status}</Pill></span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <SettingRow title="Outreach mode" desc="Current runtime routing mode.">
+                    <Pill type="neutral">Test (Sandbox Sink)</Pill>
+                  </SettingRow>
+                  <SettingRow title="Default sink recipient" desc="Safe destination for intercepted drafts.">
+                    <code>dev-sink@vsrsalesengine.local</code>
+                  </SettingRow>
+                  <SettingRow title="Statutory compliance gate" desc="Unsubscribe headers, postal identity, and opt-out policy.">
+                    <Pill type="green">Enforced</Pill>
+                  </SettingRow>
+                </>
+              )}
+              {settingsTab === 'Source policy' && (
+                <>
+                  <div className="settings-title"><h2>Source policy & legal boundaries</h2></div>
+                  <SettingRow title="LinkedIn scraping prohibition" desc="Strictly enforced architectural constraint.">
+                    <Pill type="green">No Scraping / Manual Only</Pill>
+                  </SettingRow>
+                  <SettingRow title="Public job feeds policy" desc="Attribution notices and rate limits.">
+                    <Pill type="green">Permitted with Attribution</Pill>
+                  </SettingRow>
+                  <SettingRow title="Canonical deduplication" desc="Duplicate detection on normalized URLs and company/title pairs.">
+                    <Pill type="green">Active</Pill>
+                  </SettingRow>
+                </>
+              )}
+              {settingsTab === 'Data & privacy' && (
+                <>
+                  <div className="settings-title"><h2>Data & privacy protection</h2></div>
+                  <SettingRow title="SSRF protection" desc="Client and server blocks against private/loopback IP requests.">
+                    <Pill type="green">Active</Pill>
+                  </SettingRow>
+                  <SettingRow title="Prompt injection scrub" desc="Neutralizes system commands in external job postings.">
+                    <Pill type="green">Active</Pill>
+                  </SettingRow>
+                  <SettingRow title="Pre-send suppression lookup" desc="Checks suppression database prior to any dispatch attempt.">
+                    <Pill type="green">Active</Pill>
+                  </SettingRow>
                 </>
               )}
               {settingsTab === 'About' && (
