@@ -4,3 +4,90 @@
 @media(max-width:1000px){.sidebar{transform:translateX(-100%);transition:transform .2s ease;width:260px}.sidebar.open{transform:translateX(0)}.main-area{margin-left:0}.mobile-menu{display:grid;place-items:center;border:0;background:transparent;color:var(--text);width:30px;height:30px}.mobile-close{display:grid;place-items:center;margin-left:auto;border:0;background:transparent;color:#a9bbd7}.nav-scrim{display:block;position:fixed;inset:0;background:rgba(7,18,36,.45);z-index:19}.topbar{justify-content:flex-start}.breadcrumbs{flex:1}.top-actions{gap:8px}.global-search{width:250px}.profile-button>span{display:none}.dashboard-grid,.schedule-layout{grid-template-columns:1fr 1fr}.sources-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.campaign-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.summary-strip{flex-wrap:wrap;row-gap:15px}.summary-strip .strip-note{margin:0;padding:0 18px}.readiness-summary{grid-template-columns:1fr 1fr}.readiness-score{grid-column:1/3}.settings-layout{grid-template-columns:185px minmax(0,1fr)}}
 @media(max-width:720px){.topbar{height:58px;padding:0 14px;gap:8px}.breadcrumbs{font-size:10px;overflow:hidden}.breadcrumbs span{display:none}.top-actions{gap:4px}.global-search{width:34px;padding:0;justify-content:center;border-color:transparent;background:transparent}.global-search input,.global-search kbd{display:none}.global-search:focus-within{position:absolute;left:52px;right:170px;width:auto;padding:0 9px;background:var(--panel);z-index:2;border-color:var(--line)}.global-search:focus-within input{display:block}.global-search:focus-within kbd{display:none}.top-divider,.profile-button{display:none}.icon-button{width:29px;height:29px}.dev-banner{padding:9px 14px;align-items:flex-start}.dev-banner>span{gap:5px}.dev-banner>span>span{line-height:1.45}.dev-banner button{display:none}.page-content{padding:19px 14px 22px}.page-heading{align-items:flex-start;flex-direction:column;gap:14px;margin-bottom:17px}.page-heading h1{font-size:23px}.heading-actions{width:100%;flex-wrap:wrap}.heading-actions .btn{flex:1}.kpi-grid,.kpi-grid.three{grid-template-columns:1fr 1fr;gap:9px}.kpi-card{min-height:104px;padding:12px;gap:9px}.kpi-icon{height:30px;width:30px}.kpi-icon svg{width:16px}.kpi-title{font-size:9px}.kpi-value{font-size:21px}.kpi-foot{font-size:8px;gap:3px}.dashboard-grid,.bottom-grid,.discovery-layout,.schedule-layout,.report-charts{grid-template-columns:1fr}.chart-panel,.source-panel{min-height:250px}.donut-row{justify-content:flex-start;padding-left:7px}.donut-chart{height:135px;width:135px}.donut-legend{max-width:220px}.panel-pad{padding:14px}.summary-strip{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:6px 0}.summary-strip>div:not(.strip-note){padding:10px 14px;min-width:0;border-right:0;border-bottom:1px solid var(--line)}.summary-strip>div:nth-child(even){border-left:1px solid var(--line)}.summary-strip .strip-note{grid-column:1/3;padding:10px 14px;margin:0}.table-controls{align-items:stretch;flex-direction:column;padding:11px}.table-search{width:100%;max-width:none}.control-right{flex-wrap:wrap}.control-right .select-wrap{flex:1}.control-right select{max-width:none;width:100%}.table-panel>.panel-heading{padding:14px 14px 3px}.tabs{gap:18px;overflow-x:auto;padding:0 14px}.tabs button{white-space:nowrap}.footer{padding:0 14px 14px;gap:8px;align-items:flex-start;flex-direction:column}.footer>span:last-child{flex-wrap:wrap}.source-choice-grid,.field-grid,.sources-grid,.campaign-cards,.readiness-summary,.definition-grid{grid-template-columns:1fr}.readiness-score{grid-column:auto}.form-footer{align-items:flex-start;flex-direction:column}.form-footer .btn{width:100%}.schedule-row{flex-wrap:wrap;align-items:flex-start;padding:13px}.schedule-info{min-width:calc(100% - 52px);flex:none;width:calc(100% - 52px)}.schedule-status{width:100%;justify-content:flex-end}.automation-banner{align-items:flex-start;flex-wrap:wrap}.automation-banner>.pill{margin-left:49px}.settings-layout{grid-template-columns:1fr}.settings-nav{display:flex;overflow:auto;gap:3px;padding:6px}.settings-nav button{width:auto;min-width:max-content;padding:0 9px}.settings-nav button>svg:last-child{display:none}.settings-main{padding:15px}.setting-row{align-items:flex-start;flex-direction:column;gap:9px}.setting-control{min-width:0;width:100%;justify-content:flex-start}.setting-control>input{width:100%}.settings-footer{align-items:flex-start;flex-direction:column}.signin-shell{grid-template-columns:1fr}.signin-aside{min-height:250px;padding:24px 24px 19px}.signin-brand{font-size:15px}.signin-message{padding:29px 0 19px;margin:0}.signin-message h1{font-size:29px;max-width:440px;margin-bottom:10px}.signin-message>p{font-size:11px;line-height:1.6}.signin-points{display:none}.signin-aside-footer{font-size:8px}.signin-main{padding:28px 20px 20px}.signin-card{max-width:420px}.signin-bottom-links{margin-top:28px}.modal-backdrop{padding:10px}.modal-card{max-height:calc(100vh - 20px)}.modal-header{padding:15px}.modal-body{padding:14px 15px 16px}.modal-actions{flex-wrap:wrap}.modal-actions .btn{flex:1}.detail-drawer{padding:17px 16px 0}.drawer-company{flex-wrap:wrap}.drawer-company>.pill{margin-left:39px}.drawer-role{font-size:13px}.detail-grid{gap:12px}.dev-banner{font-size:9px}.campaign-actions{flex-direction:row}.campaign-actions .btn{font-size:8px}.source-card>p{min-height:0;margin-bottom:13px}}
 @media(max-width:420px){.kpi-card{display:block}.kpi-icon{margin-bottom:9px}.kpi-title{margin-bottom:4px}.kpi-value{font-size:20px}.kpi-foot{margin-top:5px}.kpi-more{top:9px}.campaign-actions{flex-direction:column}.profile-button{display:none}.top-actions{gap:2px}.dev-banner>span>span{font-size:8px}.page-heading h1{font-size:21px}}
+
+
+/* ==========================================================================
+   SOLID OPAQUE MODAL SYSTEM (.modal-backdrop, .modal-box, .modal-card)
+   Fixes modal transparency bleed-through (App, DraftComposer, ComplianceGate)
+   ========================================================================== */
+.modal-backdrop,
+.drawer-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+}
+
+.modal-box,
+.modal-card {
+  width: 100% !important;
+  max-width: 540px !important;
+  max-height: calc(100vh - 40px) !important;
+  overflow-y: auto !important;
+  background-color: #ffffff !important;
+  color: #182742 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  position: relative !important;
+  z-index: 1001 !important;
+  opacity: 1 !important;
+}
+
+.dark .modal-box,
+.dark .modal-card,
+.app-shell.dark .modal-box,
+.app-shell.dark .modal-card {
+  background-color: #121e31 !important;
+  color: #e6edf8 !important;
+  border-color: #26354d !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+}
+
+.modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #e7ecf4 !important;
+  background-color: inherit !important;
+}
+
+.dark .modal-header,
+.app-shell.dark .modal-header {
+  border-bottom-color: #26354d !important;
+}
+
+.modal-header h2,
+.modal-header h3 {
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: inherit !important;
+}
+
+.modal-body {
+  padding: 20px !important;
+  background-color: inherit !important;
+}
+
+.modal-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  padding: 14px 20px !important;
+  border-top: 1px solid #e7ecf4 !important;
+  background-color: inherit !important;
+}
+
+.dark .modal-footer,
+.app-shell.dark .modal-footer {
+  border-top-color: #26354d !important;
+}

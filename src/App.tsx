@@ -2109,7 +2109,7 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div className="modal-box modal-card" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{modal.type === 'campaign' ? 'Create Sales Campaign' : modal.type === 'contact' ? 'Add Contact' : modal.type === 'opportunity' ? 'Add Opportunity' : modal.type === 'schedule' ? 'New Automation Schedule' : 'Information'}</h3>
           <button className="icon-button" onClick={onClose}><X size={16} /></button>
