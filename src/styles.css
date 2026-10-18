@@ -91,3 +91,388 @@
 .app-shell.dark .modal-footer {
   border-top-color: #26354d !important;
 }
+
+/* ==========================================================================
+   MODERN DETAIL DRAWER & SLIDE-OVER CARDS
+   Eliminates cramped inline text and formats enterprise drawer cards
+   ========================================================================== */
+.drawer-backdrop {
+  justify-content: flex-end !important;
+  padding: 0 !important;
+}
+
+.detail-drawer {
+  height: 100% !important;
+  width: min(580px, 100%) !important;
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  box-shadow: -15px 0 55px rgba(10, 27, 52, 0.22) !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.drawer-header {
+  padding: 22px 24px 16px !important;
+  border-bottom: 1px solid var(--line) !important;
+  background-color: var(--panel) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+}
+
+.drawer-header h2 {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.4px !important;
+  margin: 4px 0 2px !important;
+  color: var(--text) !important;
+}
+
+.drawer-header p {
+  font-size: 13px !important;
+  color: var(--muted) !important;
+  margin: 0 !important;
+}
+
+.drawer-content {
+  padding: 20px 24px !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+}
+
+.drawer-detail-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  margin-bottom: 18px !important;
+}
+
+.drawer-detail-card {
+  background-color: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.drawer-detail-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: var(--muted) !important;
+}
+
+.drawer-detail-val {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.drawer-pipeline-card {
+  background-color: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin: 16px 0 !important;
+}
+
+.drawer-pipeline-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 10px !important;
+}
+
+.drawer-pipeline-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--text) !important;
+}
+
+.drawer-evidence-card {
+  background-color: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 4px solid #2563eb !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  margin: 14px 0 !important;
+}
+
+.drawer-evidence-card strong {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--muted) !important;
+  display: block !important;
+  margin-bottom: 4px !important;
+}
+
+.drawer-evidence-card p {
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: var(--text) !important;
+  margin: 0 !important;
+}
+
+.drawer-readiness-banner {
+  background-color: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-start !important;
+  margin: 14px 0 !important;
+}
+
+.dark .drawer-readiness-banner,
+.app-shell.dark .drawer-readiness-banner {
+  background-color: #422006 !important;
+  border-color: #78350f !important;
+  color: #fef3c7 !important;
+}
+
+.timeline-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
+
+.timeline-item {
+  font-size: 11px !important;
+  background-color: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+}
+
+.drawer-footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  background-color: var(--panel) !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
+}
+
+/* ==========================================================================
+   ZOHO AI FORMS ASSISTANT & MODERN FORM SYSTEM
+   AI Prompt Bar, Section Grids, Touch-Friendly 40px Controls
+   ========================================================================== */
+.ai-form-assistant {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08)) !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 18px !important;
+}
+
+.dark .ai-form-assistant,
+.app-shell.dark .ai-form-assistant {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(124, 58, 237, 0.16)) !important;
+  border-color: rgba(96, 165, 250, 0.35) !important;
+}
+
+.ai-assistant-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 8px !important;
+}
+
+.ai-assistant-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #2563eb !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  padding: 3px 9px !important;
+  border-radius: 20px !important;
+}
+
+.dark .ai-assistant-badge,
+.app-shell.dark .ai-assistant-badge {
+  color: #60a5fa !important;
+  background-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+.ai-assistant-row {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.ai-assistant-input {
+  flex: 1 !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+.ai-assistant-btn {
+  height: 38px !important;
+  padding: 0 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  transition: all .15s ease !important;
+}
+
+.ai-assistant-btn:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+}
+
+.ai-prompt-samples {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-top: 8px !important;
+  align-items: center !important;
+}
+
+.ai-sample-label {
+  font-size: 10px !important;
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+}
+
+.ai-sample-chip {
+  font-size: 10px !important;
+  padding: 3px 9px !important;
+  border-radius: 12px !important;
+  background-color: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  transition: all .15s ease !important;
+}
+
+.ai-sample-chip:hover {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+}
+
+.form-section-divider {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 18px 0 10px !important;
+}
+
+.form-section-divider:after {
+  content: "" !important;
+  height: 1px !important;
+  background-color: var(--line) !important;
+  flex: 1 !important;
+}
+
+.form-grid-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  margin-bottom: 12px !important;
+}
+
+.form-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.form-label-required {
+  color: #ef4444 !important;
+  margin-left: 3px !important;
+}
+
+.form-input,
+.form-select {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+  transition: border-color .15s ease, box-shadow .15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #2563eb !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.form-textarea {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+  resize: vertical !important;
+  min-height: 65px !important;
+  box-sizing: border-box !important;
+}
+
+.form-checkbox-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  padding: 6px 0 !important;
+}
+
