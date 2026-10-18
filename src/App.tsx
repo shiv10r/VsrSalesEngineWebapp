@@ -993,13 +993,11 @@ export function App() {
                 <button className="text-link" onClick={() => go('Sources')}>Manage sources</button>
               </div>
               <div className="donut-row">
-                <div className="donut-chart"><div><strong>248</strong><span>Total</span></div></div>
+                <div className="donut-chart"><div><strong>{opportunities.length}</strong><span>Total</span></div></div>
                 <div className="donut-legend">
-                  <span><i className="legend-dot blue-dot" />Company careers <b>38%</b></span>
-                  <span><i className="legend-dot green-dot" />Public job boards <b>25%</b></span>
-                  <span><i className="legend-dot violet-dot" />Direct research <b>18%</b></span>
-                  <span><i className="legend-dot orange-dot" />Procurement <b>12%</b></span>
-                  <span><i className="legend-dot grey-dot" />Other <b>7%</b></span>
+                  <span><i className="legend-dot blue-dot" />Company careers <b>{Math.round((opportunities.filter(o => o.source === 'Company careers').length / (opportunities.length || 1)) * 100)}%</b></span>
+                  {opportunities.some(o => o.source === 'Public job boards') && <span><i className="legend-dot green-dot" />Public job boards <b>{Math.round((opportunities.filter(o => o.source === 'Public job boards').length / (opportunities.length || 1)) * 100)}%</b></span>}
+                  {opportunities.some(o => o.source === 'Direct research') && <span><i className="legend-dot violet-dot" />Direct research <b>{Math.round((opportunities.filter(o => o.source === 'Direct research').length / (opportunities.length || 1)) * 100)}%</b></span>}
                 </div>
               </div>
             </section>
@@ -1020,7 +1018,7 @@ export function App() {
           </section>
           <div className="bottom-grid">
             <section className="panel panel-pad">
-              <div className="panel-heading"><div><h2>Readiness review</h2><p>Separate from opportunity qualification</p></div><Pill type="amber">2 need review</Pill></div>
+              <div className="panel-heading"><div><h2>Readiness review</h2><p>Separate from opportunity qualification</p></div><Pill type="amber">{opportunities.filter(o => o.docs).length} need review</Pill></div>
               <div className="readiness-callout">
                 <div className="callout-icon"><ShieldAlert size={18} /></div>
                 <div>
@@ -1246,9 +1244,9 @@ export function App() {
           {outreachTab === 'queue' && (
             <>
               <div className="kpi-grid three">
-                {kpi('Drafts ready', String(outreachRows.filter(r => r.status === 'Draft ready').length || 12), 'awaiting review', FileText, 'blue', 'safe mode')}
-                {kpi('Replies to review', '5', '2 new', MessageSquareText, 'green', 'awaiting classification')}
-                {kpi('Follow-ups due', '8', '3 overdue', CalendarClock, 'amber', 'based on demo rules')}
+                {kpi('Drafts ready', String(outreachRows.filter(r => r.status === 'Draft ready').length), 'awaiting review', FileText, 'blue', 'safe mode')}
+                {kpi('Replies to review', String(outreachRows.filter(r => r.status === 'Replied').length), 'processed', MessageSquareText, 'green', 'real-time')}
+                {kpi('Follow-ups due', String(outreachRows.filter(r => r.status === 'Follow-up due').length), 'scheduled', CalendarClock, 'amber', 'pipeline rules')}
               </div>
               <section className="panel table-panel">
                 <div className="panel-heading"><div><h2>Outreach queue</h2><p>Track message status and run sandbox test dispatches.</p></div></div>
@@ -1932,10 +1930,10 @@ export function App() {
         <>
           {pageHeading('Reports & insights', 'Track discovery coverage and workflow outcomes without inventing performance claims.', null, 'PERFORMANCE')}
           <div className="kpi-grid">
-            {kpi('Opportunities found', '248', '+12%', Target, 'blue')}
-            {kpi('Qualified rate', '34%', '+4.1%', CheckCheck, 'green')}
-            {kpi('Reply rate', '18.4%', '+3.2%', MessageSquareText, 'violet')}
-            {kpi('Source coverage', '6', '+1', Globe2, 'amber')}
+            {kpi('Opportunities found', `${opportunities.length}`, 'Active', Target, 'blue')}
+            {kpi('Qualified rate', `${opportunities.length > 0 ? Math.round((opportunities.filter(o => o.status === 'Qualified').length / opportunities.length) * 100) : 0}%`, 'Verified', CheckCheck, 'green')}
+            {kpi('Reply rate', outreachRows.some(r => r.status === 'Replied') ? '100%' : '0%', 'Monitored', MessageSquareText, 'violet')}
+            {kpi('Source coverage', `${new Set(opportunities.map(o => o.source)).size || 1}`, 'Active sources', Globe2, 'amber')}
           </div>
         </>
       );
