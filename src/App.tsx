@@ -37,10 +37,10 @@ const seedOpportunities: Opportunity[] = [
 ];
 
 const seedContacts: Contact[] = [
-  {name:'Maya Patel', company:'Northstar Digital', role:'Engineering Manager', email:'maya.patel@example.com', source:'Company website', status:'Not contacted'},
-  {name:'Arjun Mehta', company:'BrightPath Health', role:'Talent Partner', email:'arjun.mehta@example.com', source:'Public profile', status:'Replied'},
-  {name:'Sarah Johnson', company:'Vertex Logistics', role:'Technology Director', email:'sarah.johnson@example.com', source:'Direct', status:'Follow-up due'},
-  {name:'Daniel Kim', company:'NimbusWorks', role:'Procurement Lead', email:'daniel.kim@example.com', source:'Tender portal', status:'Do not contact'},
+  { id: 'CNT-1001', name: 'Maya Patel', company: 'Northstar Digital', role: 'Engineering Manager', email: 'maya.patel@example.com', source: 'Company website', sourceUrl: 'https://example.com/careers/northstar', channelBasis: 'ExplicitBusinessContact', status: 'Not contacted', qualificationStatus: 'Verified', isRoleAccount: false },
+  { id: 'CNT-1002', name: 'Arjun Mehta', company: 'BrightPath Health', role: 'Talent Partner', email: 'arjun.mehta@example.com', source: 'Public profile', sourceUrl: 'https://example.com/team/brightpath', channelBasis: 'PublicDirectory', status: 'Replied', qualificationStatus: 'Qualified', isRoleAccount: false },
+  { id: 'CNT-1003', name: 'Sarah Johnson', company: 'Vertex Logistics', role: 'Technology Director', email: 'sarah.johnson@example.com', source: 'Direct', sourceUrl: 'https://example.com/contact/vertex', channelBasis: 'ExplicitBusinessContact', status: 'Follow-up due', qualificationStatus: 'Verified', isRoleAccount: false },
+  { id: 'CNT-1004', name: 'Daniel Kim', company: 'NimbusWorks', role: 'Procurement Lead', email: 'daniel.kim@example.com', source: 'Tender portal', sourceUrl: 'https://example.com/tenders/nimbus', channelBasis: 'PublicDirectory', status: 'Do not contact', qualificationStatus: 'OptedOut', isRoleAccount: false },
 ];
 
 const seedCampaigns: Campaign[] = [
@@ -161,6 +161,66 @@ export function App() {
       }
     } catch {
       // Fallback
+    }
+  };
+
+  const loadContacts = async () => {
+    try {
+      const data = await api.getContacts();
+      if (data && data.length > 0) {
+        setContacts(data);
+      }
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    loadContacts();
+  }, [page]);
+
+  const handleCreateContact = async (payload: any) => {
+    const created = await api.createContact({
+      name: payload.name,
+      company: payload.company,
+      role: payload.role,
+      email: payload.email,
+      source: payload.source || 'Manual entry',
+      sourceUrl: payload.sourceUrl,
+      channelBasis: payload.channelBasis || 'ExplicitBusinessContact',
+      notes: payload.notes,
+    });
+    if (created) {
+      setContacts(prev => [created, ...prev.filter(c => c.id !== created.id)]);
+      notify(`Contact ${created.name} added`);
+    } else {
+      const fallback: Contact = {
+        id: `CNT-${1000 + contacts.length + 1}`,
+        name: payload.name || 'New contact',
+        company: payload.company || 'Unassigned',
+        role: payload.role || 'Unspecified',
+        email: payload.email || 'contact@example.com',
+        source: payload.source || 'Manual entry',
+        sourceUrl: payload.sourceUrl,
+        channelBasis: payload.channelBasis || 'ExplicitBusinessContact',
+        status: 'Not contacted',
+        qualificationStatus: 'Unverified',
+        isRoleAccount: false,
+        notes: payload.notes,
+      };
+      setContacts(prev => [fallback, ...prev]);
+      notify('Contact added (local)');
+    }
+  };
+
+  const handleQualifyContact = async (id: string, qualificationStatus: string, status?: string, notes?: string) => {
+    const updated = await api.qualifyContact(id, qualificationStatus, status, notes);
+    if (updated) {
+      setContacts(prev => prev.map(c => c.id === id ? updated : c));
+      notify(`Contact ${updated.name} updated to ${qualificationStatus}`);
+    } else {
+      setContacts(prev => prev.map(c => c.id === id ? { ...c, qualificationStatus, status: status || c.status } : c));
+      notify(`Contact qualification updated (local)`);
     }
   };
 
@@ -347,8 +407,7 @@ export function App() {
           setCampaigns(prev => [{ name: m.name || 'New sales campaign', audience: m.audience || 'Custom audience', sent: 0, replies: 0, status: 'Draft', next: 'Not scheduled' }, ...prev]);
           notify('Campaign draft created');
         } else if (m.type === 'contact') {
-          setContacts(prev => [{ name: m.name || 'New contact', company: m.company || 'Unassigned', role: m.role || 'Not specified', email: m.email || 'Not provided', source: 'Manually added', status: 'Not contacted' }, ...prev]);
-          notify('Contact added');
+          handleCreateContact(m);
         } else if (m.type === 'opportunity') {
           handleCreateOpportunity(m);
         }
@@ -819,16 +878,53 @@ export function App() {
           <section className="panel table-panel">
             <div className="table-wrap">
               <table>
-                <thead><tr><th>CONTACT</th><th>COMPANY</th><th>ROLE</th><th>EMAIL / CHANNEL</th><th>SOURCE</th><th>STATUS</th></tr></thead>
+                <thead><tr><th>CONTACT</th><th>COMPANY</th><th>ROLE</th><th>EMAIL / CHANNEL</th><th>SOURCE & PROVENANCE</th><th>QUALIFICATION</th><th>ACTIONS</th></tr></thead>
                 <tbody>
                   {contacts.map(c => (
-                    <tr key={c.email}>
-                      <td><strong>{c.name}</strong></td>
+                    <tr key={c.id || c.email}>
+                      <td>
+                        <strong>{c.name}</strong>
+                        {c.isRoleAccount && <span style={{ marginLeft: 6, fontSize: '0.72rem', color: 'var(--red-600, #dc2626)', background: 'var(--red-50, #fef2f2)', padding: '2px 6px', borderRadius: 4, display: 'inline-block' }}>Role account</span>}
+                      </td>
                       <td>{c.company}</td>
                       <td className="muted-cell">{c.role}</td>
                       <td><span className="email-cell"><Mail size={13} />{c.email}</span></td>
-                      <td className="muted-cell">{c.source}</td>
-                      <td><Pill type={c.status === 'Replied' ? 'green' : c.status === 'Do not contact' ? 'red' : 'neutral'}>{c.status}</Pill></td>
+                      <td className="muted-cell">
+                        <div>{c.source}</div>
+                        {c.sourceUrl && (
+                          <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'underline' }}>
+                            Source link
+                          </a>
+                        )}
+                        {c.channelBasis && <div style={{ fontSize: '0.72rem', color: '#6b7280' }}>{c.channelBasis}</div>}
+                      </td>
+                      <td>
+                        <Pill type={c.qualificationStatus === 'Verified' ? 'green' : c.qualificationStatus === 'BlockedByPolicy' || c.qualificationStatus === 'OptedOut' ? 'red' : 'neutral'}>
+                          {c.qualificationStatus || 'Unverified'}
+                        </Pill>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {c.qualificationStatus !== 'Verified' && (
+                            <button
+                              className="btn btn-sm btn-outline"
+                              style={{ padding: '3px 8px', fontSize: '0.75rem', borderRadius: 4, cursor: 'pointer' }}
+                              onClick={() => handleQualifyContact(c.id, 'Verified', 'Ready for outreach')}
+                            >
+                              Verify
+                            </button>
+                          )}
+                          {c.qualificationStatus !== 'OptedOut' && (
+                            <button
+                              className="btn btn-sm btn-outline"
+                              style={{ padding: '3px 8px', fontSize: '0.75rem', borderRadius: 4, cursor: 'pointer', color: '#dc2626' }}
+                              onClick={() => handleQualifyContact(c.id, 'OptedOut', 'Do not contact', 'Opted out by user')}
+                            >
+                              Opt Out
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1146,6 +1242,10 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
   const [vendorRequirementNotes, setVendorRequirementNotes] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [evidenceSnippet, setEvidenceSnippet] = useState('');
+  const [contactRole, setContactRole] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [channelBasis, setChannelBasis] = useState('ExplicitBusinessContact');
+  const [contactNotes, setContactNotes] = useState('');
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -1163,8 +1263,32 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
           )}
           {modal.type === 'contact' && (
             <>
-              <label className="field-label">Full Name<input value={name} onChange={e => setName(e.target.value)} placeholder="Maya Patel" /></label>
-              <label className="field-label">Company<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="Northstar Digital" /></label>
+              <label className="field-label">Full Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Maya Patel" /></label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Company<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Northstar Digital" /></label>
+                <label className="field-label">Role<input value={contactRole} onChange={e => setContactRole(e.target.value)} placeholder="e.g. Engineering Manager" /></label>
+              </div>
+              <label className="field-label">Email Address<input value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="e.g. maya.patel@example.com" /></label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Source
+                  <select value={source} onChange={e => setSource(e.target.value)}>
+                    <option value="Company careers">Company careers</option>
+                    <option value="Public directory">Public directory</option>
+                    <option value="Direct research">Direct research</option>
+                    <option value="Public procurement">Public procurement</option>
+                    <option value="Manual entry">Manual entry</option>
+                  </select>
+                </label>
+                <label className="field-label">Channel Basis
+                  <select value={channelBasis} onChange={e => setChannelBasis(e.target.value)}>
+                    <option value="ExplicitBusinessContact">Explicit Business Contact</option>
+                    <option value="PublicDirectory">Public Directory</option>
+                    <option value="ManualHandoff">Manual Handoff</option>
+                  </select>
+                </label>
+              </div>
+              <label className="field-label">Source URL<input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://example.com/team" /></label>
+              <label className="field-label">Verification / Provenance Notes<input value={contactNotes} onChange={e => setContactNotes(e.target.value)} placeholder="Publicly listed on corporate site." /></label>
             </>
           )}
           {modal.type === 'opportunity' && (
@@ -1220,7 +1344,9 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
             <Button variant="primary" onClick={() => onCreate({
               type: modal.type,
               name,
-              company: name,
+              company: modal.type === 'contact' ? secondary : name,
+              role: contactRole,
+              email: contactEmail,
               title: secondary,
               audience: secondary,
               source,
@@ -1230,6 +1356,8 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
               docs,
               vendorRequirementNotes,
               sourceUrl,
+              channelBasis,
+              notes: contactNotes,
               evidenceSnippet
             })}>Create</Button>
           )}
