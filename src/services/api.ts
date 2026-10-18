@@ -1,4 +1,4 @@
-import { AuthResponse, AutomationSchedule, Campaign, ComplianceGateResult, Contact, CreateOpportunityPayload, DiscoveryRunResult, DraftGenerationRequest, DraftGenerationResult, DraftValidationResult, GuestStatus, Opportunity, OutreachSendRequest, OutreachSendResult, OutreachTemplate, ScheduleRunResult, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from '../types';
+import { AuthResponse, AutomationSchedule, Campaign, ComplianceGateResult, Contact, CreateOpportunityPayload, DiscoveryRunResult, DraftGenerationRequest, DraftGenerationResult, DraftValidationResult, ExecutionRecord, GuestStatus, Opportunity, OutreachSendRequest, OutreachSendResult, OutreachTemplate, ReliabilityMetrics, RetryResult, ScheduleRunResult, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -732,6 +732,72 @@ class ApiService {
     } catch {
       return false;
     }
+  }
+
+  async getReliabilityMetrics(): Promise<ReliabilityMetrics | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/reliability/metrics`, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async getFailures(): Promise<ExecutionRecord[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/reliability/failures`, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  async retryFailure(id: string): Promise<RetryResult> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/reliability/failures/${encodeURIComponent(id)}/retry`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+      });
+      const data = await res.json();
+      return {
+        executionId: id,
+        success: data.success ?? false,
+        status: data.status || (data.success ? 'Success' : 'Error'),
+        message: data.message || 'Retry executed',
+        nextRetryAtUtc: data.nextRetryAtUtc,
+        attemptCount: data.attemptCount || 1,
+      };
+    } catch (err: any) {
+      return {
+        executionId: id,
+        success: false,
+        status: 'Error',
+        message: err.message || 'Failed to retry execution',
+        attemptCount: 1,
+      };
+    }
+  }
+
+  async simulateFailure(failureType: string, jobType?: string, referenceId?: string): Promise<ExecutionRecord | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/reliability/simulate-failure`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ failureType, jobType, referenceId }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
   }
 }
 
