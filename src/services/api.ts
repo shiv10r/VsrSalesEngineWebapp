@@ -1,4 +1,4 @@
-import { AuthResponse, Contact, CreateOpportunityPayload, DiscoveryRunResult, DraftGenerationRequest, DraftGenerationResult, DraftValidationResult, GuestStatus, Opportunity, OutreachTemplate, SearchProfile, SourceDefinition } from '../types';
+import { AuthResponse, Contact, CreateOpportunityPayload, DiscoveryRunResult, DraftGenerationRequest, DraftGenerationResult, DraftValidationResult, GuestStatus, Opportunity, OutreachSendRequest, OutreachSendResult, OutreachTemplate, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -441,6 +441,75 @@ class ApiService {
       // Fallback
     }
     return null;
+  }
+
+  async sendOutreach(request: OutreachSendRequest): Promise<OutreachSendResult | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/send`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async getSinkMessages(): Promise<SinkMessage[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/sink-messages`, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  async getSuppressions(query?: string): Promise<SuppressionRecord[]> {
+    try {
+      const url = query ? `${API_BASE_URL}/outreach/suppressions?query=${encodeURIComponent(query)}` : `${API_BASE_URL}/outreach/suppressions`;
+      const res = await fetch(url, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  async addSuppression(target: string, reason?: string, type?: string): Promise<SuppressionRecord | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/suppressions`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ target, reason: reason || 'ManualSuppression', type: type || 'Email', source: 'AdminAction' }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async removeSuppression(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/suppressions/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 }
 

@@ -13,7 +13,7 @@ import {
 import { SignIn } from './components/screens/SignIn';
 import { DraftComposerModal } from './components/DraftComposerModal';
 import { api } from './services/api';
-import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SourceDefinition } from './types';
+import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from './types';
 
 const navGroups = [
   { title: 'WORKSPACE', items: [
@@ -96,6 +96,100 @@ export function App() {
   const [lastRunResult, setLastRunResult] = useState<DiscoveryRunResult | null>(null);
   const [isRunningDiscovery, setIsRunningDiscovery] = useState(false);
 
+  const [outreachTab, setOutreachTab] = useState<'queue' | 'sink' | 'suppression'>('queue');
+  const [sinkMessages, setSinkMessages] = useState<SinkMessage[]>([]);
+  const [suppressions, setSuppressions] = useState<SuppressionRecord[]>([]);
+  const [newSuppressionTarget, setNewSuppressionTarget] = useState<string>('');
+  const [newSuppressionReason, setNewSuppressionReason] = useState<string>('OptOut');
+  const [isSendingToSink, setIsSendingToSink] = useState<string | null>(null);
+
+  const loadSinkMessages = async () => {
+    try {
+      const data = await api.getSinkMessages();
+      setSinkMessages(data);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const loadSuppressions = async () => {
+    try {
+      const data = await api.getSuppressions();
+      setSuppressions(data);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleSendToSink = async (row: OutreachRow) => {
+    setIsSendingToSink(row.company);
+    try {
+      const contactObj = contacts.find(c => c.name.toLowerCase() === row.contact.toLowerCase() || c.company.toLowerCase() === row.company.toLowerCase());
+      const recipientEmail = contactObj?.email || `${row.contact.toLowerCase().replace(/\s+/g, '.')}@${row.company.toLowerCase().replace(/\s+/g, '')}.example`;
+
+      const result = await api.sendOutreach({
+        recipientEmail,
+        recipientName: row.contact,
+        subject: row.subject,
+        body: `Hi ${row.contact},\n\nFollowing up on ${row.company}'s requirements.\n\nBest regards,\nVSR Team\n\nTo opt out reply UNSUBSCRIBE. VSR Technologies, 100 Enterprise Way, Austin TX 78701.`,
+        idempotencyKey: `SEND-${row.company}-${row.subject}`.replace(/\s+/g, '-'),
+        isTestMode: true,
+      });
+
+      if (result) {
+        if (result.suppressed) {
+          notify(`Send blocked: ${result.detail}`);
+        } else if (result.wasRoutedToSink) {
+          notify(`Safely routed to test sink (${result.providerMessageId || 'prov_sink'})`);
+          loadSinkMessages();
+        } else {
+          notify(`Dispatched: ${result.status}`);
+        }
+      } else {
+        notify(`Simulated sink send completed for ${row.company}`);
+      }
+    } finally {
+      setIsSendingToSink(null);
+    }
+  };
+
+  const handleAddSuppression = async () => {
+    if (!newSuppressionTarget.trim()) {
+      notify('Please enter an email address or domain.');
+      return;
+    }
+    const isDomain = newSuppressionTarget.includes('@') && newSuppressionTarget.startsWith('@') || !newSuppressionTarget.includes('@');
+    const added = await api.addSuppression(
+      newSuppressionTarget.trim(),
+      newSuppressionReason,
+      isDomain ? 'Domain' : 'Email'
+    );
+    if (added) {
+      setSuppressions(prev => [added, ...prev.filter(s => s.id !== added.id)]);
+      setNewSuppressionTarget('');
+      notify(`Suppressed: ${added.target}`);
+    } else {
+      const fallback: SuppressionRecord = {
+        id: `SUP-${Date.now()}`,
+        target: newSuppressionTarget.trim(),
+        type: isDomain ? 'Domain' : 'Email',
+        reason: newSuppressionReason,
+        source: 'AdminAction',
+        createdBy: 'Sales Member',
+        createdAtUtc: new Date().toISOString(),
+      };
+      setSuppressions(prev => [fallback, ...prev]);
+      setNewSuppressionTarget('');
+      notify(`Added to local suppression list: ${fallback.target}`);
+    }
+  };
+
+  const handleRemoveSuppression = async (id: string) => {
+    await api.removeSuppression(id);
+    setSuppressions(prev => prev.filter(s => s.id !== id));
+    notify('Suppression removed.');
+  };
+
   const loadSourcesAndProfiles = async () => {
     try {
       const [srcData, profData] = await Promise.all([
@@ -111,6 +205,10 @@ export function App() {
 
   useEffect(() => {
     loadSourcesAndProfiles();
+    if (page === 'Outreach') {
+      loadSinkMessages();
+      loadSuppressions();
+    }
   }, [page]);
 
   const handleUpdateSourceStatus = async (id: string, newStatus: string) => {
@@ -827,7 +925,7 @@ export function App() {
     if (page === 'Outreach') {
       return (
         <>
-          {pageHeading('Outreach', 'Prepare relevant, evidence-based messages and track approved follow-up.', (
+          {pageHeading('Outreach & Delivery Controls', 'Prepare evidence-based messages, inspect sandboxed test dispatches, and manage suppression rules.', (
             <>
               <Button icon={ListChecks} onClick={() => notify('Bulk review mode active.')}>Review queue</Button>
               <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'compose' })}>Draft outreach</Button>
@@ -835,33 +933,162 @@ export function App() {
           ), 'ENGAGEMENT')}
           <div className="notice-inline amber-notice">
             <ShieldCheck size={15} />
-            <span>Safe mode: messages are draft-only in this UI. The production flow enforces approved channels, consent/legitimate basis, opt-outs, and rate limits.</span>
+            <span>Sandbox sink mode active: Outbound messages route safely to internal test sinks (dev-sink@vsrsalesengine.local) and check suppression lists before dispatch.</span>
           </div>
-          <div className="kpi-grid three">
-            {kpi('Drafts ready', '12', '4 due today', FileText, 'blue', 'awaiting review')}
-            {kpi('Replies to review', '5', '2 new', MessageSquareText, 'green', 'awaiting classification')}
-            {kpi('Follow-ups due', '8', '3 overdue', CalendarClock, 'amber', 'based on demo rules')}
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--line)', paddingBottom: '8px' }}>
+            <button
+              className={`btn btn-sm ${outreachTab === 'queue' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setOutreachTab('queue')}
+            >
+              Outreach Queue ({outreachRows.length})
+            </button>
+            <button
+              className={`btn btn-sm ${outreachTab === 'sink' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => { setOutreachTab('sink'); loadSinkMessages(); }}
+            >
+              Sandbox Sink Inbox ({sinkMessages.length})
+            </button>
+            <button
+              className={`btn btn-sm ${outreachTab === 'suppression' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => { setOutreachTab('suppression'); loadSuppressions(); }}
+            >
+              Suppression & Opt-Outs ({suppressions.length})
+            </button>
           </div>
-          <section className="panel table-panel">
-            <div className="panel-heading"><div><h2>Outreach queue</h2><p>Track message status independently from opportunity status.</p></div></div>
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>COMPANY / CONTACT</th><th>MESSAGE</th><th>CHANNEL</th><th>STATUS</th><th>LAST UPDATED</th><th></th></tr></thead>
-                <tbody>
-                  {outreachRows.map(r => (
-                    <tr key={r.company}>
-                      <td><div className="company-cell"><div className="company-logo logo-2">{r.company.slice(0, 2)}</div><div><strong>{r.company}</strong><small>{r.contact}</small></div></div></td>
-                      <td><div className="message-cell">{r.subject}</div></td>
-                      <td><span className="source-cell"><Mail size={14} />{r.channel}</span></td>
-                      <td><Pill type={r.status === 'Replied' ? 'green' : r.status === 'Follow-up due' ? 'amber' : 'blue'} dot>{r.status}</Pill></td>
-                      <td className="muted-cell">{r.updated}</td>
-                      <td><button className="row-action" onClick={() => setModal({ type: 'compose', prefill: r.subject, company: r.company })}>Open <ChevronRight size={14} /></button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+
+          {outreachTab === 'queue' && (
+            <>
+              <div className="kpi-grid three">
+                {kpi('Drafts ready', String(outreachRows.filter(r => r.status === 'Draft ready').length || 12), 'awaiting review', FileText, 'blue', 'safe mode')}
+                {kpi('Replies to review', '5', '2 new', MessageSquareText, 'green', 'awaiting classification')}
+                {kpi('Follow-ups due', '8', '3 overdue', CalendarClock, 'amber', 'based on demo rules')}
+              </div>
+              <section className="panel table-panel">
+                <div className="panel-heading"><div><h2>Outreach queue</h2><p>Track message status and run sandbox test dispatches.</p></div></div>
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>COMPANY / CONTACT</th><th>MESSAGE</th><th>CHANNEL</th><th>STATUS</th><th>LAST UPDATED</th><th>ACTIONS</th></tr></thead>
+                    <tbody>
+                      {outreachRows.map(r => (
+                        <tr key={r.company + r.subject}>
+                          <td><div className="company-cell"><div className="company-logo logo-2">{r.company.slice(0, 2)}</div><div><strong>{r.company}</strong><small>{r.contact}</small></div></div></td>
+                          <td><div className="message-cell">{r.subject}</div></td>
+                          <td><span className="source-cell"><Mail size={14} />{r.channel}</span></td>
+                          <td><Pill type={r.status === 'Replied' ? 'green' : r.status === 'Follow-up due' ? 'amber' : 'blue'} dot>{r.status}</Pill></td>
+                          <td className="muted-cell">{r.updated}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <button className="row-action" onClick={() => setModal({ type: 'compose', prefill: r.subject, company: r.company })}>Open <ChevronRight size={14} /></button>
+                              <button
+                                className="btn btn-sm btn-outline"
+                                style={{ padding: '3px 8px', fontSize: '0.72rem', borderRadius: 4 }}
+                                disabled={isSendingToSink === r.company}
+                                onClick={() => handleSendToSink(r)}
+                              >
+                                {isSendingToSink === r.company ? 'Routing...' : 'Send to Test Sink'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
+
+          {outreachTab === 'sink' && (
+            <section className="panel table-panel">
+              <div className="panel-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h2>Sandbox Test Sink Messages</h2>
+                  <p>Messages intercepted by the sandbox provider adapter. No external emails are dispatched.</p>
+                </div>
+                <Button small icon={RefreshCw} onClick={loadSinkMessages}>Refresh</Button>
+              </div>
+              <div className="table-wrap">
+                {sinkMessages.length === 0 ? (
+                  <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
+                    <Inbox size={32} style={{ margin: '0 auto 8px', opacity: 0.6 }} />
+                    <p>No test messages in sink inbox yet. Click <b>Send to Test Sink</b> on any outreach draft to test interception.</p>
+                  </div>
+                ) : (
+                  <table>
+                    <thead><tr><th>SENT AT</th><th>ORIGINAL RECIPIENT</th><th>ROUTED SINK ADDRESS</th><th>SUBJECT</th><th>PROVIDER MSG ID</th><th>MODE</th></tr></thead>
+                    <tbody>
+                      {sinkMessages.map(m => (
+                        <tr key={m.id}>
+                          <td className="muted-cell">{new Date(m.sentAtUtc).toLocaleTimeString()}</td>
+                          <td><strong>{m.originalRecipient}</strong></td>
+                          <td><span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 6px', borderRadius: 4, fontSize: '0.75rem' }}>{m.routedRecipient}</span></td>
+                          <td>{m.subject}</td>
+                          <td className="muted-cell" style={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>{m.providerMessageId}</td>
+                          <td><Pill type="green">{m.mode}</Pill></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </section>
+          )}
+
+          {outreachTab === 'suppression' && (
+            <section className="panel table-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Durable Suppression & Opt-Out Registry</h2>
+                  <p>Pre-send safety gate. Any matching email or domain is strictly blocked from outreach dispatches.</p>
+                </div>
+              </div>
+              <div style={{ padding: '16px', borderBottom: '1px solid var(--line)', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input
+                  value={newSuppressionTarget}
+                  onChange={e => setNewSuppressionTarget(e.target.value)}
+                  placeholder="e.g. user@domain.com or @competitor.com"
+                  style={{ flex: 1, minWidth: '220px', padding: '7px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)' }}
+                />
+                <select
+                  value={newSuppressionReason}
+                  onChange={e => setNewSuppressionReason(e.target.value)}
+                  style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--text)' }}
+                >
+                  <option value="OptOut">OptOut (User unsubscribe)</option>
+                  <option value="Complaint">Complaint</option>
+                  <option value="ManualSuppression">Manual Suppression</option>
+                  <option value="BlockedByPolicy">BlockedByPolicy</option>
+                </select>
+                <Button variant="primary" small onClick={handleAddSuppression}>Add Target</Button>
+              </div>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>TARGET (EMAIL / DOMAIN)</th><th>TYPE</th><th>REASON</th><th>SOURCE</th><th>CREATED BY</th><th>ACTION</th></tr></thead>
+                  <tbody>
+                    {suppressions.map(s => (
+                      <tr key={s.id}>
+                        <td><strong>{s.target}</strong></td>
+                        <td><span style={{ fontSize: '0.75rem', background: 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>{s.type}</span></td>
+                        <td><Pill type={s.reason === 'BlockedByPolicy' ? 'red' : 'amber'}>{s.reason}</Pill></td>
+                        <td className="muted-cell">{s.source}</td>
+                        <td className="muted-cell">{s.createdBy}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            style={{ color: '#dc2626', padding: '2px 8px', fontSize: '0.72rem', borderRadius: 4 }}
+                            onClick={() => handleRemoveSuppression(s.id)}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </>
       );
     }

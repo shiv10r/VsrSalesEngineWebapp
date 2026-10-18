@@ -203,3 +203,46 @@ export interface DraftValidationResult {
   hasPhysicalAddress: boolean;
   hasSenderIdentity: boolean;
 }
+
+export interface OutreachSendRequest {
+  recipientEmail: string;
+  recipientName: string;
+  subject: string;
+  body: string;
+  idempotencyKey?: string;
+  isTestMode?: boolean;
+  sinkAddressOverride?: string;
+}
+
+export interface OutreachSendResult {
+  success: boolean;
+  messageId: string;
+  status: string;
+  detail: string;
+  suppressed: boolean;
+  wasRoutedToSink: boolean;
+  providerMessageId?: string;
+}
+
+export interface SinkMessage {
+  id: string;
+  idempotencyKey: string;
+  originalRecipient: string;
+  routedRecipient: string;
+  subject: string;
+  body: string;
+  providerMessageId: string;
+  mode: string;
+  sentAtUtc: string;
+}
+
+export interface SuppressionRecord {
+  id: string;
+  target: string;
+  type: string;
+  reason: string;
+  source: string;
+  createdBy: string;
+  createdAtUtc: string;
+}
+
