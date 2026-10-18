@@ -30,33 +30,64 @@ const navGroups = [
 ];
 
 const seedOpportunities: Opportunity[] = [
-  { id:'OP-1048', company:'Northstar Digital', title:'Senior .NET / React Engineer', source:'Company careers', location:'Remote · India', found:'Today, 10:42 AM', status:'New', fit:'High', type:'Individual developer', docs:false, sourceUrl:'https://example.com/careers/northstar', evidenceSnippet:'Looking for full-stack engineer.' },
-  { id:'OP-1047', company:'CloudHarbor Labs', title:'Contract API modernization partner', source:'Public job board', location:'Bengaluru, India', found:'Today, 9:18 AM', status:'Needs review', fit:'High', type:'Company/vendor', docs:true, sourceUrl:'https://example.com/jobs/cloudharbor', evidenceSnippet:'Partner needed for legacy modernizations.' },
-  { id:'OP-1046', company:'BrightPath Health', title:'Healthcare platform engineering support', source:'Company website', location:'Remote · Global', found:'Yesterday', status:'Qualified', fit:'High', type:'Direct project', docs:false, sourceUrl:'https://example.com/careers/brightpath', evidenceSnippet:'Direct project for analytics.' },
-  { id:'OP-1045', company:'Vertex Logistics', title:'Full-stack .NET developer contract', source:'Approved feed', location:'Gurugram, India', found:'Yesterday', status:'Contacted', fit:'Medium', type:'Individual developer', docs:false, sourceUrl:'https://example.com/feed/vertex', evidenceSnippet:'.NET contractor needed.' },
-  { id:'OP-1044', company:'NimbusWorks', title:'Build internal operations portal', source:'Public procurement', location:'New Delhi, India', found:'Oct 16', status:'Readiness hold', fit:'Medium', type:'Company/vendor', docs:true, sourceUrl:'https://example.com/tenders/nimbus', evidenceSnippet:'Tender requires GST and compliance pack.' },
-  { id:'OP-1043', company:'Asterloop Systems', title:'React frontend contractor', source:'Company careers', location:'Remote · India', found:'Oct 16', status:'Interested', fit:'High', type:'Individual developer', docs:false, sourceUrl:'https://example.com/careers/asterloop', evidenceSnippet:'Revamp client dashboard with React.' },
+  {
+    id: 'OP-1001',
+    company: 'Northstar Digital',
+    title: 'Senior .NET / React Engineer',
+    source: 'Company careers',
+    location: 'Remote · India',
+    found: 'Today, 10:42 AM',
+    status: 'Qualified',
+    fit: 'High',
+    type: 'Direct project',
+    docs: true,
+    sourceUrl: 'https://example.com/careers/northstar',
+    evidenceSnippet: 'Looking for full-stack .NET and React platform engineering support.'
+  }
 ];
 
 const seedContacts: Contact[] = [
-  { id: 'CNT-1001', name: 'Maya Patel', company: 'Northstar Digital', role: 'Engineering Manager', email: 'maya.patel@example.com', source: 'Company website', sourceUrl: 'https://example.com/careers/northstar', channelBasis: 'ExplicitBusinessContact', status: 'Not contacted', qualificationStatus: 'Verified', isRoleAccount: false },
-  { id: 'CNT-1002', name: 'Arjun Mehta', company: 'BrightPath Health', role: 'Talent Partner', email: 'arjun.mehta@example.com', source: 'Public profile', sourceUrl: 'https://example.com/team/brightpath', channelBasis: 'PublicDirectory', status: 'Replied', qualificationStatus: 'Qualified', isRoleAccount: false },
-  { id: 'CNT-1003', name: 'Sarah Johnson', company: 'Vertex Logistics', role: 'Technology Director', email: 'sarah.johnson@example.com', source: 'Direct', sourceUrl: 'https://example.com/contact/vertex', channelBasis: 'ExplicitBusinessContact', status: 'Follow-up due', qualificationStatus: 'Verified', isRoleAccount: false },
-  { id: 'CNT-1004', name: 'Daniel Kim', company: 'NimbusWorks', role: 'Procurement Lead', email: 'daniel.kim@example.com', source: 'Tender portal', sourceUrl: 'https://example.com/tenders/nimbus', channelBasis: 'PublicDirectory', status: 'Do not contact', qualificationStatus: 'OptedOut', isRoleAccount: false },
+  {
+    id: 'CNT-1001',
+    name: 'Maya Patel',
+    company: 'Northstar Digital',
+    role: 'Engineering Manager',
+    email: 'maya.patel@example.com',
+    source: 'Company website',
+    sourceUrl: 'https://example.com/careers/northstar',
+    channelBasis: 'ExplicitBusinessContact',
+    status: 'Verified',
+    qualificationStatus: 'Verified',
+    isRoleAccount: false
+  }
 ];
 
 const seedCampaigns: Campaign[] = [
-  {name:'Healthcare engineering leads', audience:'Healthcare · India + global', sent:42, replies:9, status:'Active', next:'Today, 2:30 PM'},
-  {name:'.NET modernization opportunities', audience:'.NET · Cloud · Engineering', sent:86, replies:13, status:'Paused', next:'Paused by owner'},
-  {name:'Warm lead follow-up', audience:'Previously engaged contacts', sent:19, replies:7, status:'Completed', next:'Complete'},
+  {
+    id: 'CMP-1001',
+    name: '.NET Modernization Outreach',
+    audience: '.NET & Cloud Engineering',
+    sent: 24,
+    replies: 5,
+    status: 'Active',
+    next: 'Today, 2:30 PM',
+    mode: 'ApprovalRequired',
+    senderName: 'VSR Outreach Lead',
+    senderEmail: 'outreach@vsrtechnologies.com',
+    senderAddress: '100 Enterprise Way, Suite 400, Austin TX 78701',
+    dailySendLimit: 25
+  }
 ];
 
 const seedActivities = [
-  {icon:Search,color:'blue',title:'Discovery run completed',detail:'Public job boards · 18 results found · 4 new matches',time:'10:42 AM',state:'success'},
-  {icon:Mail,color:'green',title:'Outreach draft created',detail:'Northstar Digital · Senior .NET / React Engineer',time:'10:31 AM',state:'review'},
-  {icon:CalendarClock,color:'violet',title:'Scheduled run skipped',detail:'Company careers scan · source rate limit reached',time:'9:00 AM',state:'warning'},
-  {icon:Users,color:'blue',title:'Contact updated',detail:'Maya Patel · email status verified from public source',time:'Yesterday',state:'success'},
-  {icon:ShieldAlert,color:'amber',title:'Readiness requirement detected',detail:'CloudHarbor Labs · supplier registration requested',time:'Yesterday',state:'review'},
+  {
+    icon: Search,
+    color: 'blue',
+    title: 'Discovery run completed',
+    detail: 'Company careers · 1 high-fit match verified',
+    time: '10:42 AM',
+    state: 'success'
+  }
 ];
 
 function LogoMark({small=false}:{small?:boolean}) { return <div className={`brand-mark ${small?'small':''}`}><span>V</span></div>; }
@@ -78,13 +109,11 @@ export function App() {
   const [modal, setModal] = useState<any>(null);
   const [toast, setToast] = useState('');
   const [mobileNav, setMobileNav] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [scheduled, setScheduled] = useState<Record<string, boolean>>({daily:true,weekly:false,followup:true});
   const [connected, setConnected] = useState<Record<string, boolean>>({'Company careers':true,'Public job boards':true,'Direct company research':true,'LinkedIn handoff':false,'Public procurement':true,'Approved APIs':false});
   const [outreachRows, setOutreachRows] = useState<OutreachRow[]>([
     {company:'Northstar Digital',contact:'Maya Patel',subject:'Engineering support for your .NET team',channel:'Email',status:'Draft ready',updated:'Today, 10:31 AM'},
-    {company:'BrightPath Health',contact:'Arjun Mehta',subject:'Healthcare platform delivery capacity',channel:'Email',status:'Replied',updated:'Yesterday'},
-    {company:'Vertex Logistics',contact:'Sarah Johnson',subject:'Follow-up: full-stack engineering support',channel:'Email',status:'Follow-up due',updated:'Yesterday'},
-    {company:'Asterloop Systems',contact:'Unassigned',subject:'React frontend contractor opportunity',channel:'Manual handoff',status:'Needs contact',updated:'Oct 16'},
   ]);
   const [campaigns, setCampaigns] = useState<Campaign[]>(seedCampaigns);
   const [opportunities, setOpportunities] = useState<Opportunity[]>(seedOpportunities);
@@ -645,11 +674,21 @@ export function App() {
   }
 
   return (
-    <div className={`app-shell ${dark ? 'dark' : ''}`}>
+    <div className={`app-shell ${dark ? 'dark' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
-        <div className="brand-row" onClick={() => go('Dashboard')}>
-          <LogoMark />
-          <div className="brand-name">VSR <b>Sales Engine</b><small>SALES WORKSPACE</small></div>
+        <div className="brand-row">
+          <div className="brand-mark-group" onClick={() => go('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <LogoMark />
+            <div className="brand-name">VSR <b>Sales Engine</b><small>SALES WORKSPACE</small></div>
+          </div>
+          <button
+            className="sidebar-collapse-toggle desktop-only"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            aria-label="Toggle sidebar collapse"
+          >
+            <Menu size={16} />
+          </button>
           <button className="mobile-close" onClick={() => setMobileNav(false)}><X size={18} /></button>
         </div>
         <div className="workspace-select">
@@ -691,7 +730,20 @@ export function App() {
       {mobileNav && <div className="nav-scrim" onClick={() => setMobileNav(false)} />}
       <main className="main-area">
         <header className="topbar">
-          <button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu size={20} /></button>
+          <button
+            className="hamburger-btn"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Toggle sidebar collapse"
+            onClick={() => {
+              if (window.innerWidth <= 1000) {
+                setMobileNav(!mobileNav);
+              } else {
+                setSidebarCollapsed(!sidebarCollapsed);
+              }
+            }}
+          >
+            <Menu size={18} />
+          </button>
           <div className="breadcrumbs"><span>VSR Sales Engine</span><ChevronRight size={13} /><strong>{page}</strong></div>
           <div className="top-actions">
             <label className="global-search">
@@ -914,10 +966,10 @@ export function App() {
             <button onClick={() => go('Settings')}>Environment settings</button>
           </div>
           <div className="kpi-grid">
-            {kpi('Opportunities found', `${opportunities.length + 242}`, '+12%', Target, 'blue')}
-            {kpi('Outreach sent', '156', '+8%', Send, 'violet')}
-            {kpi('Replies received', '32', '+27%', MessageSquareText, 'green')}
-            {kpi('Interested leads', '11', '+22%', Users, 'amber')}
+            {kpi('Opportunities found', `${opportunities.length}`, 'Active', Target, 'blue')}
+            {kpi('Outreach prepared', `${outreachRows.length}`, 'Active', Send, 'violet')}
+            {kpi('Active campaigns', `${campaigns.length}`, 'Active', MessageSquareText, 'green')}
+            {kpi('Verified contacts', `${contacts.length}`, 'Active', Users, 'amber')}
           </div>
           <div className="dashboard-grid">
             <section className="panel chart-panel">
@@ -1002,9 +1054,9 @@ export function App() {
             </>
           ), 'PIPELINE')}
           <div className="summary-strip">
-            <div><span>All opportunities</span><strong>{opportunities.length + 242}</strong></div>
+            <div><span>All opportunities</span><strong>{opportunities.length}</strong></div>
             <div><span>New to review</span><strong>{opportunities.filter(o => ['New', 'Needs review'].includes(o.status)).length}</strong></div>
-            <div><span>Qualified</span><strong>{opportunities.filter(o => o.status === 'Qualified').length + 18}</strong></div>
+            <div><span>Qualified</span><strong>{opportunities.filter(o => o.status === 'Qualified').length}</strong></div>
             <div><span>Readiness hold</span><strong>{opportunities.filter(o => o.docs).length}</strong></div>
             <div className="strip-note"><Info size={14} />Readiness is tracked separately from sales fit.</div>
           </div>
