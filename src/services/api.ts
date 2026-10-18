@@ -1,4 +1,4 @@
-import { AuthResponse, GuestStatus, Opportunity } from '../types';
+import { AuthResponse, CreateOpportunityPayload, GuestStatus, Opportunity } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -30,6 +30,25 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
     return headers;
+  }
+
+  private mapOpportunity(o: any): Opportunity {
+    return {
+      id: o.id,
+      company: o.company,
+      title: o.title,
+      source: o.source,
+      location: o.location,
+      found: o.foundAt || 'Today',
+      status: o.status,
+      fit: o.fit,
+      type: o.type,
+      docs: o.hasVendorDocRequirements ?? false,
+      vendorRequirementNotes: o.vendorRequirementNotes,
+      sourceUrl: o.sourceUrl,
+      evidenceSnippet: o.evidenceSnippet,
+      statusHistory: o.statusHistory || [],
+    };
   }
 
   async checkHealth(): Promise<boolean> {
@@ -107,32 +126,87 @@ class ApiService {
     };
   }
 
-  async getOpportunities(): Promise<Opportunity[]> {
+  async getOpportunities(params?: { query?: string; status?: string; source?: string; fit?: string }): Promise<Opportunity[]> {
     try {
-      const res = await fetch(`${API_BASE_URL}/opportunities`, {
-        headers: this.getHeaders(),
-      });
+      const searchParams = new URLSearchParams();
+      if (params?.query) searchParams.append('query', params.query);
+      if (params?.status && params.status !== 'All statuses') searchParams.append('status', params.status);
+      if (params?.source && params.source !== 'All sources') searchParams.append('source', params.source);
+      if (params?.fit) searchParams.append('fit', params.fit);
+      searchParams.append('pageSize', '100');
+
+      const url = `${API_BASE_URL}/opportunities?${searchParams.toString()}`;
+      const res = await fetch(url, { headers: this.getHeaders() });
       if (res.ok) {
         const data = await res.json();
-        return data.map((o: any) => ({
-          id: o.id,
-          company: o.company,
-          title: o.title,
-          source: o.source,
-          location: o.location,
-          found: o.foundAt || 'Today',
-          status: o.status,
-          fit: o.fit,
-          type: o.type,
-          docs: o.hasVendorDocRequirements,
-          sourceUrl: o.sourceUrl,
-          evidenceSnippet: o.evidenceSnippet,
-        }));
+        const items = data.items ? data.items : (Array.isArray(data) ? data : []);
+        return items.map((o: any) => this.mapOpportunity(o));
       }
     } catch {
       // Fallback to local state if server offline
     }
     return [];
+  }
+
+  async getOpportunityById(id: string): Promise<Opportunity | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/opportunities/${encodeURIComponent(id)}`, {
+        headers: this.getHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return this.mapOpportunity(data);
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async createOpportunity(payload: CreateOpportunityPayload): Promise<Opportunity | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/opportunities`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return this.mapOpportunity(data);
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async updateOpportunityStatus(id: string, newStatus: string, reason?: string): Promise<Opportunity | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/opportunities/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ newStatus, reason }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return this.mapOpportunity(data);
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async archiveOpportunity(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/opportunities/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 }
 
