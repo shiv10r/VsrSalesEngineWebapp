@@ -8,7 +8,7 @@ import {
   RefreshCw, Search, Send, Settings, ShieldAlert, ShieldCheck, SlidersHorizontal,
   Sparkles, Target, Users, Workflow, X, Zap, ChartNoAxesCombined,
   Building2, CheckCheck, Pencil, TriangleAlert, CalendarDays, Info, Sun, Server,
-  KeyRound, Database, Code2, MapPin, ExternalLink
+  KeyRound, Database, Code2, MapPin, ExternalLink, Trash2
 } from 'lucide-react';
 import { SignIn } from './components/screens/SignIn';
 import { DraftComposerModal } from './components/DraftComposerModal';
@@ -644,10 +644,47 @@ export function App() {
   };
 
   const handleArchive = async (item: Opportunity) => {
-    await api.archiveOpportunity(item.id);
-    setOpportunities(prev => prev.filter(o => o.id !== item.id));
-    setDetail(null);
-    notify(`Opportunity ${item.id} archived`);
+    await handleDeleteOpportunity(item.id);
+  };
+
+  const handleDeleteOpportunity = async (id: string) => {
+    if (window.confirm(`Are you sure you want to delete opportunity ${id}?`)) {
+      await api.deleteOpportunity(id);
+      setOpportunities(prev => prev.filter(o => o.id !== id));
+      if (detail?.id === id) setDetail(null);
+      notify(`Opportunity ${id} deleted`);
+    }
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    if (window.confirm(`Are you sure you want to delete contact ${id}?`)) {
+      await api.deleteContact(id);
+      setContacts(prev => prev.filter(c => c.id !== id));
+      notify(`Contact ${id} deleted`);
+    }
+  };
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (window.confirm(`Are you sure you want to delete campaign ${id}?`)) {
+      await api.deleteCampaign(id);
+      setCampaigns(prev => prev.filter(c => (c.id || c.name) !== id));
+      notify(`Campaign ${id} deleted`);
+    }
+  };
+
+  const handleDeleteOutreachRow = (company: string, subject: string) => {
+    if (window.confirm(`Remove draft message for ${company}?`)) {
+      setOutreachRows(prev => prev.filter(r => !(r.company === company && r.subject === subject)));
+      notify(`Outreach draft for ${company} removed`);
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (window.confirm(`Are you sure you want to delete schedule ${id}?`)) {
+      await api.deleteSchedule(id);
+      setSchedules(prev => prev.filter(s => s.id !== id));
+      notify(`Schedule ${id} deleted`);
+    }
   };
 
   const go = (next: string) => { setPage(next); setMobileNav(false); setGlobalSearch(''); };
@@ -677,18 +714,18 @@ export function App() {
     <div className={`app-shell ${dark ? 'dark' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
         <div className="brand-row">
+          <button
+            className="hamburger-btn sidebar-hamburger"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            aria-label="Toggle navigation sidebar"
+          >
+            <Menu size={18} />
+          </button>
           <div className="brand-mark-group" onClick={() => go('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <LogoMark />
             <div className="brand-name">VSR <b>Sales Engine</b><small>SALES WORKSPACE</small></div>
           </div>
-          <button
-            className="sidebar-collapse-toggle desktop-only"
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            aria-label="Toggle sidebar collapse"
-          >
-            <Menu size={16} />
-          </button>
           <button className="mobile-close" onClick={() => setMobileNav(false)}><X size={18} /></button>
         </div>
         <div className="workspace-select">
@@ -932,7 +969,12 @@ export function App() {
                   {o.docs && <span title="Vendor requirements detected" className="tiny-flag"><FileCheck2 size={13} /></span>}
                 </td>
                 <td className="muted-cell">{o.found}</td>
-                <td><button className="row-more" onClick={() => setDetail(o)} title="View details"><ChevronRight size={16} /></button></td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button className="row-more" onClick={() => setDetail(o)} title="View details"><ChevronRight size={16} /></button>
+                    <button className="row-delete" onClick={(e) => { e.stopPropagation(); handleDeleteOpportunity(o.id); }} title="Delete opportunity"><Trash2 size={14} /></button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1272,6 +1314,13 @@ export function App() {
                               >
                                 {isSendingToSink === r.company ? 'Routing...' : 'Send to Test Sink'}
                               </button>
+                              <button
+                                className="row-delete"
+                                title="Remove draft"
+                                onClick={() => handleDeleteOutreachRow(r.company, r.subject)}
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1404,12 +1453,20 @@ export function App() {
                   <span>Delay: <b>{c.delayDaysBetweenTouches || 3}d</b></span>
                 </div>
 
-                <div className="campaign-actions" style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div className="campaign-actions" style={{ marginTop: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <Button small icon={ShieldCheck} onClick={() => setSelectedGateCampaign(c)}>Check Gate</Button>
                   <Button small onClick={() => setModal({ type: 'compose', prefill: `Campaign: ${c.name}` })}>Sequence</Button>
                   <Button small variant={c.status === 'Active' ? 'secondary' : 'primary'} onClick={() => handleToggleCampaignStatus(c)}>
                     {c.status === 'Active' ? 'Pause' : 'Activate'}
                   </Button>
+                  <button
+                    className="row-delete"
+                    title="Delete campaign"
+                    onClick={() => handleDeleteCampaign(c.id || c.name)}
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               </section>
             ))}
@@ -1451,7 +1508,7 @@ export function App() {
                         </Pill>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
                           {c.qualificationStatus !== 'Verified' && (
                             <button
                               className="btn btn-sm btn-outline"
@@ -1470,6 +1527,14 @@ export function App() {
                               Opt Out
                             </button>
                           )}
+                          <button
+                            className="row-delete"
+                            title="Delete contact"
+                            onClick={() => handleDeleteContact(c.id)}
+                            style={{ marginLeft: '4px' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1560,7 +1625,7 @@ export function App() {
                     </div>
                   )}
                 </div>
-                <div className="schedule-status" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="schedule-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Button
                     small
                     variant="secondary"
@@ -1575,6 +1640,14 @@ export function App() {
                     onChange={() => handleToggleSchedule(s)}
                     label={`Toggle ${s.name}`}
                   />
+                  <button
+                    className="row-delete"
+                    title="Delete schedule"
+                    onClick={() => handleDeleteSchedule(s.id)}
+                    style={{ marginLeft: '4px' }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -2678,7 +2751,7 @@ function DetailDrawer({
         </div>
 
         <div className="drawer-footer">
-          <Button variant="secondary" onClick={() => onArchive(item)}>Archive</Button>
+          <Button variant="danger" icon={Trash2} onClick={() => onArchive(item)}>Delete</Button>
           <Button onClick={onClose}>Close</Button>
           <Button variant="primary" onClick={() => { onNotify('Outreach draft created from opportunity'); onClose(); }}>
             <Send size={14} style={{ marginRight: '6px' }} /> Prepare outreach draft
