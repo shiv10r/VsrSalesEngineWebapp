@@ -14,7 +14,7 @@ import { SignIn } from './components/screens/SignIn';
 import { DraftComposerModal } from './components/DraftComposerModal';
 import { ComplianceGateModal } from './components/ComplianceGateModal';
 import { api } from './services/api';
-import { Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from './types';
+import { AutomationSchedule, Campaign, Contact, DiscoveryRunResult, Opportunity, OutreachRow, SearchProfile, SinkMessage, SourceDefinition, SuppressionRecord } from './types';
 
 const navGroups = [
   { title: 'WORKSPACE', items: [
@@ -96,6 +96,8 @@ export function App() {
   const [searchProfiles, setSearchProfiles] = useState<SearchProfile[]>([]);
   const [lastRunResult, setLastRunResult] = useState<DiscoveryRunResult | null>(null);
   const [isRunningDiscovery, setIsRunningDiscovery] = useState(false);
+  const [schedules, setSchedules] = useState<AutomationSchedule[]>([]);
+  const [isRunningSchedule, setIsRunningSchedule] = useState<string | null>(null);
 
   const [outreachTab, setOutreachTab] = useState<'queue' | 'sink' | 'suppression'>('queue');
   const [sinkMessages, setSinkMessages] = useState<SinkMessage[]>([]);
@@ -235,6 +237,99 @@ export function App() {
     }
   };
 
+  const loadSchedules = async () => {
+    try {
+      const data = await api.getSchedules();
+      if (data && data.length > 0) {
+        setSchedules(data);
+      }
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleToggleSchedule = async (s: AutomationSchedule) => {
+    const nextVal = !s.isEnabled;
+    try {
+      const updated = await api.toggleSchedule(s.id, nextVal);
+      if (updated) {
+        setSchedules(prev => prev.map(item => item.id === s.id ? updated : item));
+        notify(`Schedule '${s.name}' ${nextVal ? 'enabled' : 'paused'}`);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+    setSchedules(prev => prev.map(item => item.id === s.id ? { ...item, isEnabled: nextVal } : item));
+    notify(`Schedule '${s.name}' ${nextVal ? 'enabled' : 'paused'} (local)`);
+  };
+
+  const handleRunScheduleNow = async (s: AutomationSchedule) => {
+    setIsRunningSchedule(s.id);
+    try {
+      const res = await api.runScheduleNow(s.id);
+      if (res.success) {
+        notify(`Schedule run executed: ${res.message}`);
+        await loadSchedules();
+      } else {
+        if (res.status === 'Conflict' || res.message.toLowerCase().includes('lock') || res.message.toLowerCase().includes('concurrency')) {
+          notify(`🔒 Concurrency lock active: ${res.message}`);
+        } else {
+          notify(`Schedule execution failed: ${res.message}`);
+        }
+      }
+    } catch (err: any) {
+      notify(`Execution failed: ${err.message}`);
+    } finally {
+      setIsRunningSchedule(null);
+    }
+  };
+
+  const handleCreateSchedule = async (payload: any) => {
+    try {
+      const created = await api.createSchedule({
+        name: payload.name || 'New schedule',
+        description: payload.description || payload.audience || 'Recurring discovery run',
+        frequency: payload.frequency || 'Daily',
+        cronExpression: payload.cronExpression,
+        timezone: payload.timezone || 'UTC',
+        profileId: payload.profileId,
+        selectedSources: payload.selectedSources || ['SRC-001', 'SRC-002'],
+        runCap: payload.runCap || 50,
+        quietHoursStart: payload.quietHoursStart || '22:00',
+        quietHoursEnd: payload.quietHoursEnd || '06:00',
+        isEnabled: true,
+      });
+      if (created) {
+        setSchedules(prev => [created, ...prev]);
+        notify(`Schedule '${created.name}' created`);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+    const fallback: AutomationSchedule = {
+      id: `SCHED-${Date.now()}`,
+      name: payload.name || 'New schedule',
+      description: payload.description || payload.audience || 'Recurring discovery run',
+      frequency: payload.frequency || 'Daily',
+      cronExpression: '0 8 * * *',
+      timezone: payload.timezone || 'UTC',
+      isEnabled: true,
+      selectedSources: ['SRC-001', 'SRC-002'],
+      runCap: payload.runCap || 50,
+      quietHoursStart: payload.quietHoursStart || '22:00',
+      quietHoursEnd: payload.quietHoursEnd || '06:00',
+      nextRunAtUtc: new Date(Date.now() + 86400000).toISOString(),
+      lastRunStatus: 'Pending',
+      createdBy: userEmail || 'user',
+      createdAtUtc: new Date().toISOString(),
+      updatedAtUtc: new Date().toISOString(),
+    };
+    setSchedules(prev => [fallback, ...prev]);
+    notify(`Schedule '${fallback.name}' created (local)`);
+  };
+
   useEffect(() => {
     loadSourcesAndProfiles();
     if (page === 'Outreach') {
@@ -243,6 +338,9 @@ export function App() {
     }
     if (page === 'Campaigns') {
       loadCampaigns();
+    }
+    if (page === 'Schedules') {
+      loadSchedules();
     }
   }, [page]);
 
@@ -563,6 +661,8 @@ export function App() {
             handleCreateContact(m);
           } else if (m.type === 'opportunity') {
             handleCreateOpportunity(m);
+          } else if (m.type === 'schedule') {
+            handleCreateSchedule(m);
           }
           setModal(null);
         }} />
@@ -1248,21 +1348,98 @@ export function App() {
     }
 
     if (page === 'Schedules') {
+      const activeSchedules = schedules.length > 0 ? schedules : [
+        {
+          id: 'SCHED-001',
+          name: 'Daily opportunity discovery',
+          description: 'Company career pages and permitted public feeds',
+          frequency: 'Weekdays',
+          cronExpression: '0 8 * * 1-5',
+          timezone: 'UTC',
+          isEnabled: true,
+          profileId: 'PROF-001',
+          selectedSources: ['SRC-001', 'SRC-002', 'SRC-005'],
+          runCap: 50,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '06:00',
+          lastRunAtUtc: new Date(Date.now() - 3600000 * 4).toISOString(),
+          nextRunAtUtc: new Date(Date.now() + 3600000 * 20).toISOString(),
+          lastRunStatus: 'Completed',
+          createdBy: 'system',
+          createdAtUtc: new Date().toISOString(),
+          updatedAtUtc: new Date().toISOString(),
+        },
+        {
+          id: 'SCHED-002',
+          name: 'Weekly procurement scan',
+          description: 'Selected public procurement portals',
+          frequency: 'Weekly',
+          cronExpression: '0 9 * * 1',
+          timezone: 'UTC',
+          isEnabled: false,
+          profileId: 'PROF-002',
+          selectedSources: ['SRC-004'],
+          runCap: 25,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '06:00',
+          lastRunAtUtc: new Date(Date.now() - 86400000 * 6).toISOString(),
+          nextRunAtUtc: new Date(Date.now() + 86400000 * 1).toISOString(),
+          lastRunStatus: 'Completed',
+          createdBy: 'system',
+          createdAtUtc: new Date().toISOString(),
+          updatedAtUtc: new Date().toISOString(),
+        }
+      ];
+
       return (
         <>
-          {pageHeading('Schedules & automation', 'Set recurring searches and follow-ups. Every run must be visible and recoverable.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'schedule' })}>New schedule</Button>, 'AUTOMATION CONTROL')}
-          <section className="panel">
-            {[{ key: 'daily', name: 'Daily opportunity discovery', desc: 'Company career pages and permitted public feeds', freq: 'Weekdays · 8:30 AM' },
-              { key: 'weekly', name: 'Weekly procurement scan', desc: 'Selected public procurement portals', freq: 'Mondays · 9:00 AM' }].map(s => (
-              <div className="schedule-row" key={s.key}>
-                <div className="schedule-info">
-                  <strong>{s.name}</strong>
-                  <p>{s.desc}</p>
-                  <div className="schedule-meta"><span><Clock3 size={13} />{s.freq}</span></div>
+          {pageHeading('Schedules & automation', 'Set recurring searches and follow-ups. Every run is visible, idempotent, and protected by distributed locks.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'schedule' })}>New schedule</Button>, 'AUTOMATION CONTROL')}
+          <div className="notice-inline" style={{ marginBottom: '16px' }}>
+            <ShieldCheck size={16} />
+            <span>Worker safety: Scheduled executions acquire distributed transaction-safe run locks to prevent duplicate sends and conflicting scraper runs.</span>
+          </div>
+          <section className="panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+            {activeSchedules.map(s => (
+              <div className="schedule-row" key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '8px' }}>
+                <div className="schedule-info" style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <strong style={{ fontSize: '15px' }}>{s.name}</strong>
+                    <Pill type={s.isEnabled ? 'green' : 'neutral'} dot>{s.isEnabled ? 'Active' : 'Paused'}</Pill>
+                    <Pill type="neutral">{s.frequency}</Pill>
+                  </div>
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: 'var(--muted)' }}>{s.description}</p>
+                  <div className="schedule-meta" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
+                    <span><Clock3 size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />Next run: {new Date(s.nextRunAtUtc).toLocaleString()}</span>
+                    <span><Moon size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />Quiet: {s.quietHoursStart}–{s.quietHoursEnd} ({s.timezone})</span>
+                    <span>Cap: {s.runCap} / run</span>
+                    {s.lastRunAtUtc && (
+                      <span>Last run: {new Date(s.lastRunAtUtc).toLocaleTimeString()} ({s.lastRunStatus})</span>
+                    )}
+                  </div>
+                  {s.selectedSources && s.selectedSources.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Sources:</span>
+                      {s.selectedSources.map(src => (
+                        <span key={src} style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--line)', borderRadius: '4px' }}>{src}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="schedule-status">
-                  <Pill type={scheduled[s.key] ? 'green' : 'neutral'} dot>{scheduled[s.key] ? 'Enabled' : 'Paused'}</Pill>
-                  <Toggle checked={!!scheduled[s.key]} onChange={(v: boolean) => { setScheduled(p => ({ ...p, [s.key]: v })); notify(`${s.name} ${v ? 'enabled' : 'paused'}`); }} label={`Toggle ${s.name}`} />
+                <div className="schedule-status" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Button
+                    small
+                    variant="secondary"
+                    icon={Zap}
+                    disabled={isRunningSchedule === s.id}
+                    onClick={() => handleRunScheduleNow(s)}
+                  >
+                    {isRunningSchedule === s.id ? 'Running...' : 'Run now'}
+                  </Button>
+                  <Toggle
+                    checked={s.isEnabled}
+                    onChange={() => handleToggleSchedule(s)}
+                    label={`Toggle ${s.name}`}
+                  />
                 </div>
               </div>
             ))}
@@ -1558,12 +1735,17 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
   const [contactEmail, setContactEmail] = useState('');
   const [channelBasis, setChannelBasis] = useState('ExplicitBusinessContact');
   const [contactNotes, setContactNotes] = useState('');
+  const [frequency, setFrequency] = useState('Daily');
+  const [runCap, setRunCap] = useState(50);
+  const [quietStart, setQuietStart] = useState('22:00');
+  const [quietEnd, setQuietEnd] = useState('06:00');
+  const [timezone, setTimezone] = useState('UTC');
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{modal.type === 'campaign' ? 'Create Sales Campaign' : modal.type === 'contact' ? 'Add Contact' : modal.type === 'opportunity' ? 'Add Opportunity' : 'Information'}</h3>
+          <h3>{modal.type === 'campaign' ? 'Create Sales Campaign' : modal.type === 'contact' ? 'Add Contact' : modal.type === 'opportunity' ? 'Add Opportunity' : modal.type === 'schedule' ? 'New Automation Schedule' : 'Information'}</h3>
           <button className="icon-button" onClick={onClose}><X size={16} /></button>
         </div>
         <div className="modal-body">
@@ -1571,6 +1753,35 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
             <>
               <label className="field-label">Campaign Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. .NET API Modernization" /></label>
               <label className="field-label">Target Audience<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Healthcare CTOs" /></label>
+            </>
+          )}
+          {modal.type === 'schedule' && (
+            <>
+              <label className="field-label">Schedule Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Daily Careers & Feeds Scan" /></label>
+              <label className="field-label">Description<input value={secondary} onChange={e => setSecondary(e.target.value)} placeholder="e.g. Automated recurring discovery for .NET and full-stack positions" /></label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Frequency
+                  <select value={frequency} onChange={e => setFrequency(e.target.value)}>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekdays">Weekdays</option>
+                    <option value="Weekly">Weekly</option>
+                  </select>
+                </label>
+                <label className="field-label">Run Cap
+                  <input type="number" value={runCap} onChange={e => setRunCap(Number(e.target.value))} min={5} max={500} />
+                </label>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <label className="field-label">Quiet Hours Start
+                  <input value={quietStart} onChange={e => setQuietStart(e.target.value)} placeholder="22:00" />
+                </label>
+                <label className="field-label">Quiet Hours End
+                  <input value={quietEnd} onChange={e => setQuietEnd(e.target.value)} placeholder="06:00" />
+                </label>
+              </div>
+              <label className="field-label">Timezone
+                <input value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="UTC" />
+              </label>
             </>
           )}
           {modal.type === 'contact' && (
@@ -1670,7 +1881,12 @@ function Modal({ modal, onClose, onNotify, onCreate }: any) {
               sourceUrl,
               channelBasis,
               notes: contactNotes,
-              evidenceSnippet
+              evidenceSnippet,
+              frequency,
+              runCap,
+              quietHoursStart: quietStart,
+              quietHoursEnd: quietEnd,
+              timezone,
             })}>Create</Button>
           )}
         </div>
