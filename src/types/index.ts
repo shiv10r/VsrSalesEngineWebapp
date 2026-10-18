@@ -153,3 +153,53 @@ export interface DiscoveryRunResult {
   }[];
 }
 
+export interface OutreachTemplate {
+  id: string;
+  name: string;
+  category: string;
+  subjectTemplate: string;
+  bodyTemplate: string;
+  serviceProposition: string;
+  jurisdictionPolicy: string;
+  footerTemplate: string;
+  isActive: boolean;
+  createdBy?: string;
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
+}
+
+export interface DraftGenerationRequest {
+  templateId?: string;
+  contactName: string;
+  companyName: string;
+  role?: string;
+  opportunityTitle?: string;
+  sourceEvidenceSnippet?: string;
+  serviceProposition?: string;
+  senderName?: string;
+  senderTitle?: string;
+  senderCompany?: string;
+  jurisdictionPolicy?: string;
+}
+
+export interface DraftGenerationResult {
+  subject: string;
+  body: string;
+  factsUsed: string[];
+  isValid: boolean;
+  missingVariables: string[];
+  prohibitedClaims: string[];
+  warnings: string[];
+  tone: string;
+  jurisdictionFooter: string;
+}
+
+export interface DraftValidationResult {
+  isValid: boolean;
+  missingVariables: string[];
+  prohibitedClaims: string[];
+  warnings: string[];
+  hasUnsubscribeMechanism: boolean;
+  hasPhysicalAddress: boolean;
+  hasSenderIdentity: boolean;
+}

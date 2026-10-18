@@ -1,4 +1,4 @@
-import { AuthResponse, Contact, CreateOpportunityPayload, DiscoveryRunResult, GuestStatus, Opportunity, SearchProfile, SourceDefinition } from '../types';
+import { AuthResponse, Contact, CreateOpportunityPayload, DiscoveryRunResult, DraftGenerationRequest, DraftGenerationResult, DraftValidationResult, GuestStatus, Opportunity, OutreachTemplate, SearchProfile, SourceDefinition } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -368,6 +368,79 @@ class ApiService {
     } catch {
       return false;
     }
+  }
+
+  async getOutreachTemplates(category?: string): Promise<OutreachTemplate[]> {
+    try {
+      const url = category ? `${API_BASE_URL}/outreach/templates?category=${encodeURIComponent(category)}` : `${API_BASE_URL}/outreach/templates`;
+      const res = await fetch(url, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  async getOutreachTemplate(id: string): Promise<OutreachTemplate | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/templates/${encodeURIComponent(id)}`, { headers: this.getHeaders() });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async createOutreachTemplate(payload: Partial<OutreachTemplate>): Promise<OutreachTemplate | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/templates`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async generateDraft(request: DraftGenerationRequest): Promise<DraftGenerationResult | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/drafts/generate`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  async validateDraft(subject: string, body: string, jurisdictionPolicy?: string): Promise<DraftValidationResult | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/outreach/drafts/validate`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ subject, body, jurisdictionPolicy }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
   }
 }
 
