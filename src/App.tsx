@@ -102,7 +102,14 @@ export function App() {
   const [userEmail, setUserEmail] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [sourceFilters, setSourceFilters] = useState<string[]>(['Company careers','Public job boards','Approved feeds','Public procurement']);
+  const [sourceFilters, setSourceFilters] = useState<string[]>([
+    "Hacker News (Freelance & Who's Hiring)",
+    "We Work Remotely (Contracts)",
+    "Remotive (Contract / Freelance)",
+    "Jobicy (Developer Contracts)",
+    "Company careers",
+    "Public job boards"
+  ]);
   const [statusFilter, setStatusFilter] = useState('All statuses');
   const [sourceFilter, setSourceFilter] = useState('All sources');
   const [activeTab, setActiveTab] = useState('Recent opportunities');
@@ -471,25 +478,27 @@ export function App() {
 
   const handleRunDiscovery = async () => {
     setIsRunningDiscovery(true);
-    notify('Starting opportunity discovery run across selected sources...');
+    notify('Querying live external contract feeds (Hacker News, WWR, Remotive, Jobicy)...');
     try {
       const res = await api.runDiscovery({
-        targetKeywords: query || '.NET Developer',
-        location: 'Remote · India',
+        targetKeywords: query || 'Developer',
+        location: 'Worldwide Remote',
         selectedSources: sourceFilters,
         maxResults: 30,
       });
       if (res) {
         setLastRunResult(res);
-        notify(`Discovery complete: ${res.newMatchesCount} new match(es), ${res.duplicateCount} duplicate(s) evaluated.`);
+        notify(`Live Discovery complete: ${res.newMatchesCount} real contract opportunities ingested!`);
         await loadOpportunities();
-        go('Search results');
+        await loadContacts();
+        go('Opportunities');
       } else {
-        notify('Discovery finished in preview mode.');
-        go('Search results');
+        notify('Live Discovery finished.');
+        await loadOpportunities();
+        go('Opportunities');
       }
     } catch {
-      notify('Failed to run discovery.');
+      notify('Failed to run live discovery.');
     } finally {
       setIsRunningDiscovery(false);
     }
@@ -957,7 +966,7 @@ export function App() {
                 <td>
                   <span className="source-cell">
                     <span className="source-mini">
-                      {o.source.includes('LinkedIn') ? 'in' : o.source.includes('board') ? 'JB' : o.source.includes('careers') ? 'WE' : o.source.includes('procurement') ? 'GOV' : '↗'}
+                      {o.source.includes('Hacker') ? 'HN' : o.source.includes('We Work') ? 'WWR' : o.source.includes('Remotive') ? 'RMT' : o.source.includes('Jobicy') ? 'JBC' : o.source.includes('LinkedIn') ? 'in' : o.source.includes('board') ? 'JB' : o.source.includes('careers') ? 'WE' : o.source.includes('procurement') ? 'GOV' : '⚡'}
                     </span>
                     {o.source}
                   </span>
@@ -971,6 +980,11 @@ export function App() {
                 <td className="muted-cell">{o.found}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {o.sourceUrl && (
+                      <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="row-more" title="Open live external posting" onClick={(e) => e.stopPropagation()}>
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
                     <button className="row-more" onClick={() => setDetail(o)} title="View details"><ChevronRight size={16} /></button>
                     <button className="row-delete" onClick={(e) => { e.stopPropagation(); handleDeleteOpportunity(o.id); }} title="Delete opportunity"><Trash2 size={14} /></button>
                   </div>
@@ -1089,8 +1103,16 @@ export function App() {
         <>
           {pageHeading('Opportunities', 'Review, qualify, and track sales opportunities from every configured source.', (
             <>
+              <Button
+                variant="primary"
+                icon={Zap}
+                onClick={handleRunDiscovery}
+                disabled={isRunningDiscovery}
+              >
+                {isRunningDiscovery ? 'Fetching live leads...' : '⚡ Fetch Real Live Contract Leads'}
+              </Button>
               <Button icon={Download} onClick={() => notify('CSV export is a prototype action.')}>Export</Button>
-              <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'opportunity' })}>Add opportunity</Button>
+              <Button icon={Plus} onClick={() => setModal({ type: 'opportunity' })}>Add manually</Button>
             </>
           ), 'PIPELINE')}
           <div className="summary-strip">
@@ -1155,6 +1177,10 @@ export function App() {
                 </div>
                 <div className="source-choice-grid">
                   {[
+                    { name: "Hacker News (Freelance & Who's Hiring)", desc: "Founder-direct contractor & dev requisitions", tag: 'Live YC/HN', icon: Zap },
+                    { name: "We Work Remotely (Contracts)", desc: "Verified programming contract RSS feeds", tag: 'Live Feed', icon: Globe2 },
+                    { name: "Remotive (Contract / Freelance)", desc: "Contract-only software engineering gigs", tag: 'Live API', icon: BriefcaseBusiness },
+                    { name: "Jobicy (Developer Contracts)", desc: "Live developer contracts & vendor gigs", tag: 'Live API', icon: Server },
                     { name: 'Company careers', desc: 'Public career pages', tag: 'Direct', icon: Building2 },
                     { name: 'Public job boards', desc: 'Public listings and feeds', tag: 'Job board', icon: BriefcaseBusiness },
                     { name: 'Approved feeds', desc: 'Configured APIs / aggregators', tag: 'API', icon: Server },
