@@ -112,15 +112,6 @@ export interface ComplianceGateResult {
   remediationSteps: string[];
 }
 
-export interface ActivityItem {
-  icon: any;
-  color: string;
-  title: string;
-  detail: string;
-  time: string;
-  state: 'success' | 'review' | 'warning' | string;
-}
-
 export interface OutreachRow {
   company: string;
   contact: string;
