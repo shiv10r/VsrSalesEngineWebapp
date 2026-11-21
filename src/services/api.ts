@@ -8,6 +8,7 @@ import { createCampaignsApi } from './campaigns';
 import { createSchedulesApi } from './schedules';
 import { createReliabilityApi } from './reliability';
 import { createAiApi } from './ai';
+import { createAgentsApi } from './agents';
 
 const core = new ApiCore();
 
@@ -23,6 +24,7 @@ export const api = {
   ...createSchedulesApi(core),
   ...createReliabilityApi(core),
   ...createAiApi(core),
+  ...createAgentsApi(core),
 };
 
 export type Api = typeof api;
