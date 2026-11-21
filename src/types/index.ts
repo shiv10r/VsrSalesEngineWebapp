@@ -5,3 +5,4 @@ export * from './campaign';
 export * from './outreach';
 export * from './discovery';
 export * from './automation';
+export * from './agents';
