@@ -1,6 +1,9 @@
 import { API_BASE_URL, ApiCore } from './http';
 import { AuthResponse, GuestStatus } from '../types';
 
+const RATE_LIMITED = 'Too many sign-in attempts. Please wait a minute and try again.';
+const UNREACHABLE = "Can't reach the server. Check your connection and try again.";
+
 export function createAuthApi(core: ApiCore) {
   const methods = {
     async checkHealth(): Promise<boolean> {
@@ -19,16 +22,14 @@ export function createAuthApi(core: ApiCore) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
+        if (res.status === 429) return { success: false, errorMessage: RATE_LIMITED };
         const data = await res.json();
         if (res.ok && data.success && data.token) {
           core.setToken(data.token);
         }
         return data;
-      } catch (err: any) {
-        return {
-          success: false,
-          errorMessage: err.message || 'Failed to connect to authentication server.',
-        };
+      } catch {
+        return { success: false, errorMessage: UNREACHABLE };
       }
     },
 
@@ -38,13 +39,16 @@ export function createAuthApi(core: ApiCore) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
+        if (res.status === 429) return { success: false, errorMessage: RATE_LIMITED };
         const data = await res.json();
         if (res.ok && data.success && data.token) {
           core.setToken(data.token);
         }
         return data;
       } catch {
-        // In offline/prototype mode, simulate fail-safe guest session
+        // Offline preview is for local development only; in production an unreachable
+        // server must not look like a successful sign-in.
+        if (!import.meta.env.DEV) return { success: false, errorMessage: UNREACHABLE };
         const simulatedGuest: AuthResponse = {
           success: true,
           token: 'dev-guest-preview-token',
