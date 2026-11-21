@@ -1,0 +1,39 @@
+/* LinkedIn manual handoff. Class prefix: li- */
+.li-section { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+.li-section h4 { margin: 0 0 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.li-person { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.li-person:last-of-type { border-bottom: 0; }
+.li-person-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; }
+.li-role { color: var(--muted); font-size: 12px; }
+.li-badge { padding: 1px 8px; border-radius: 99px; background: #e8efff; color: var(--blue); font-size: 11px; font-weight: 600; }
+
+.li-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.li-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid #cfd8e8; border-radius: 8px; background: #fff; color: var(--text); font-size: 12px; text-decoration: none; cursor: pointer; }
+.li-btn:hover { border-color: var(--blue-2); color: var(--blue); }
+.li-btn:focus-visible, .li-requested input:focus-visible { outline: 2px solid var(--blue-2); outline-offset: 2px; }
+.li-requested { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.li-requested input:disabled { cursor: not-allowed; }
+.li-requested input:disabled + span { opacity: .6; }
+
+.li-preview { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.li-preview summary { cursor: pointer; }
+.li-preview p { margin: 6px 0 0; line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
+
+.li-empty { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+.li-empty a, .li-blocked + a { color: var(--blue); }
+.li-blocked { margin: 0; font-size: 12px; color: #b42323; }
+.li-hint { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+.li-caption { margin: 10px 0 0; font-size: 11px; color: var(--muted); }
+
+.li-compact .li-actions { gap: 4px; }
+.li-compact .li-btn { padding: 3px 8px; font-size: 11px; }
+.li-compact .li-requested { margin-left: 0; font-size: 11px; }
+
+/* Relationship chips and handle note */
+.li-badge.li-rel-poster { background: #fff1dc; color: #9a5b00; }
+.li-badge.li-rel-hiring { background: #e0f6ec; color: #11704f; }
+.li-badge.li-rel-decision-maker { background: #e8efff; color: var(--blue); }
+.li-badge.li-rel-engineering { background: #efe7ff; color: #5b3fb8; }
+.li-badge.li-rel-mentioned { background: #eceff5; color: #4b5870; }
+.li-handle { margin: 0 0 6px; font-size: 11px; color: #9a5b00; }
+.li-compact .li-badge { display: inline-block; margin-bottom: 4px; }
