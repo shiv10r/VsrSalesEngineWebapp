@@ -1,4 +1,5 @@
 import { DashboardScreen } from './DashboardScreen';
+import { AgentsScreen } from './AgentsScreen';
 import { OpportunitiesScreen } from './OpportunitiesScreen';
 import { DiscoverScreen } from './DiscoverScreen';
 import { SearchResultsScreen } from './SearchResultsScreen';
@@ -29,6 +30,8 @@ export function PageRouter({ ctx }: { ctx: AppCtx }) {
       return <CampaignsScreen ctx={ctx} />;
     case 'Contacts':
       return <ContactsScreen ctx={ctx} />;
+    case 'Agents':
+      return <AgentsScreen ctx={ctx} />;
     case 'Schedules':
       return <SchedulesScreen ctx={ctx} />;
     case 'Sources':

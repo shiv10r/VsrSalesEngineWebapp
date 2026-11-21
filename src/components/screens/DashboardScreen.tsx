@@ -5,6 +5,7 @@ import {
 import { ActivityList, LineChart, ScheduleMini } from '../Helpers';
 import { Button, Pill } from '../ui/Primitives';
 import { seedActivities } from '../../data/seeds';
+import { DashboardAgentPanel } from '../agents/DashboardAgentPanel';
 import type { AppCtx } from '../../appContext';
 
 export function DashboardScreen({ ctx }: { ctx: AppCtx }) {
@@ -26,6 +27,7 @@ export function DashboardScreen({ ctx }: { ctx: AppCtx }) {
         <span>Live Sales Pipeline active — Real-time telemetry, synchronized opportunity ingestion, and fail-closed compliance guard.</span>
         <button onClick={() => go('Settings')}>Environment settings</button>
       </div>
+      <DashboardAgentPanel ctx={ctx} />
       <div className="kpi-grid">
         {kpi('Opportunities found', `${opportunities.length}`, 'Active', Target, 'blue')}
         {kpi('Outreach prepared', `${outreachRows.length}`, 'Active', Send, 'violet')}

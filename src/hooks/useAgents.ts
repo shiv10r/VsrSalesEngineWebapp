@@ -115,9 +115,10 @@ export function useAgents(ui: UiLike) {
       return;
     }
     ui.notify('Agents started. Watch the activity feed.');
-    setSelectedRunId(null);
     runningRef.current = true;
-    void refresh({ reset: true });
+    // Switching back to "all runs" reloads through the effect above; otherwise reload directly.
+    if (selectedRef.current === null) void refresh({ reset: true });
+    else setSelectedRunId(null);
   }, [refresh, ui]);
 
   const retry = useCallback(() => {
