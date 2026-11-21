@@ -72,3 +72,23 @@ export interface AgentEventsQuery {
 export type RunNowResult =
   | { ok: true; runId: string }
   | { ok: false; reason: 'running' | 'forbidden' | 'error'; message: string };
+
+/** One non-zero (weekday, hour) bucket. dayOfWeek: 0 = Monday ... 6 = Sunday. hour is in `HeatmapData.timezone`. */
+export interface HeatmapCell {
+  dayOfWeek: number;
+  hour: number;
+  newLeads: number;
+  runs: number;
+}
+
+/** Sparse: only non-zero cells are sent. */
+export interface HeatmapData {
+  days: number;
+  timezone: string;
+  cells: HeatmapCell[];
+  totalNewLeads: number;
+  totalRuns: number;
+  firstRunAtUtc: string | null;
+}
+
+export type HeatmapWindow = 7 | 28 | 90;
