@@ -1,6 +1,6 @@
 import { API_BASE_URL, ApiCore } from './http';
 import type {
-  AgentEvent, AgentEventsQuery, AgentRun, AgentsOverview, RunNowResult,
+  AgentEvent, AgentEventsQuery, AgentRun, AgentsOverview, HeatmapData, RunNowResult,
 } from '../types/agents';
 
 export function buildEventsPath(query: AgentEventsQuery = {}): string {
@@ -9,6 +9,10 @@ export function buildEventsPath(query: AgentEventsQuery = {}): string {
   params.set('take', String(query.take ?? 100));
   if (query.runId) params.set('runId', query.runId);
   return `/agents/events?${params.toString()}`;
+}
+
+export function buildHeatmapPath(days = 28): string {
+  return `/agents/heatmap?days=${encodeURIComponent(String(days))}`;
 }
 
 /** Read calls throw on failure so the UI can show an honest "unreachable" state instead of empty data. */
@@ -25,6 +29,9 @@ export function createAgentsApi(core: ApiCore) {
 
     getAgentRuns: (take = 20): Promise<AgentRun[]> =>
       getJson<AgentRun[]>(core, `/agents/runs?take=${encodeURIComponent(String(take))}`),
+
+    getHeatmap: (days = 28): Promise<HeatmapData> =>
+      getJson<HeatmapData>(core, buildHeatmapPath(days)),
 
     getAgentEvents: (query: AgentEventsQuery = {}): Promise<AgentEvent[]> =>
       getJson<AgentEvent[]>(core, buildEventsPath(query)),
