@@ -1,11 +1,11 @@
 import {
   Activity, Bot, CalendarClock, ChartNoAxesCombined, FileCheck2, Globe2, LayoutDashboard,
-  MessageSquareText, Search, Send, Settings, Target, Users,
+  MapPin, MessageSquareText, Search, Send, Settings, Target, Users,
 } from 'lucide-react';
 
 export const navGroups = [
   { title: 'WORKSPACE', items: [
-    ['Dashboard', LayoutDashboard], ['Opportunities', Target], ['Discover', Search],
+    ['Dashboard', LayoutDashboard], ['Opportunities', Target], ['Local Leads', MapPin], ['Discover', Search],
     ['Outreach', Send], ['Campaigns', MessageSquareText], ['Contacts', Users]
   ]},
   { title: 'AUTOMATION', items: [
