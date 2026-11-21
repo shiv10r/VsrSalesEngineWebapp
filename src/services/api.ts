@@ -9,6 +9,7 @@ import { createSchedulesApi } from './schedules';
 import { createReliabilityApi } from './reliability';
 import { createAiApi } from './ai';
 import { createAgentsApi } from './agents';
+import { createLocalLeadsApi } from './localLeads';
 
 const core = new ApiCore();
 
@@ -25,6 +26,7 @@ export const api = {
   ...createReliabilityApi(core),
   ...createAiApi(core),
   ...createAgentsApi(core),
+  ...createLocalLeadsApi(core),
 };
 
 export type Api = typeof api;
