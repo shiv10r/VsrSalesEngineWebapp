@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import '../../styles/agents.css';
 import type { AppCtx } from '../../appContext';
 import { useNow } from '../../hooks/useNow';
@@ -8,10 +8,12 @@ import { AgentRoster } from '../agents/AgentRoster';
 import { AgentsHeader } from '../agents/AgentsHeader';
 import { AgentsEmptyFeed, AgentsErrorState, AgentsSkeleton } from '../agents/AgentStates';
 import { RunHistory } from '../agents/RunHistory';
+import { SettingsPanel } from '../agents/settings/SettingsPanel';
 
 export function AgentsScreen({ ctx }: { ctx: AppCtx }) {
   const { pageHeading, opportunities, setDetail, agents } = ctx;
   const now = useNow();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const knownIds = useMemo(() => new Set(opportunities.map(o => String(o.id))), [opportunities]);
   const events = useMemo(() => filterByRun(agents.agentEvents, agents.selectedRunId), [agents.agentEvents, agents.selectedRunId]);
   const overview = agents.agentsOverview;
@@ -37,7 +39,11 @@ export function AgentsScreen({ ctx }: { ctx: AppCtx }) {
     <>
       {heading}
       <AgentsHeader overview={overview} now={now} guest={agents.agentsGuest}
-        starting={agents.agentsStarting} onRun={agents.runAgentsNow} />
+        starting={agents.agentsStarting} onRun={agents.runAgentsNow} onOpenSettings={() => setSettingsOpen(true)} />
+      {settingsOpen && (
+        <SettingsPanel guest={agents.agentsGuest} notify={ctx.notify}
+          onSaved={agents.reloadAgents} onClose={() => setSettingsOpen(false)} />
+      )}
       <div className="ag-layout">
         <div className="ag-col"><AgentRoster agents={overview.agents} now={now} /></div>
         <div className="ag-col">

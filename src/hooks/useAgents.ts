@@ -137,6 +137,7 @@ export function useAgents(ui: UiLike) {
     agentsStarting: starting,
     runAgentsNow: runNow,
     retryAgents: retry,
+    reloadAgents: () => { void refresh({ reset: true }); },
     agentsGuest: ui.guestMode,
   };
 }
