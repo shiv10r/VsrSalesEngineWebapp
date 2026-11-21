@@ -1,0 +1,40 @@
+/* "When leads arrive" heat map. One hue (the app blue) mixed into the panel colour, so light and dark both work. */
+.ag-heat{margin-bottom:14px}
+.ag-heat .ag-panel-h{align-items:flex-start}
+.ag-hm-caption{margin:2px 0 0;font-size:11px;color:var(--muted)}
+.ag-hm-body{padding:12px 14px 14px}
+.ag-hm-window{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.ag-hm-window button{border:0;background:transparent;color:var(--muted);padding:5px 10px;font-size:11px;font-weight:600}
+.ag-hm-window button+button{border-left:1px solid var(--line)}
+.ag-hm-window button.on{background:var(--blue);color:#fff}
+
+.ag-hm-scroll{overflow-x:auto;padding-bottom:4px}
+.ag-hm-grid{display:grid;grid-template-columns:34px repeat(24,minmax(16px,1fr));gap:3px;min-width:600px}
+.ag-hm-corner{font-size:9px;color:var(--muted);align-self:end}
+.ag-hm-band{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-align:center;color:var(--muted);
+  border-bottom:2px solid var(--line);padding-bottom:2px;white-space:nowrap;overflow:hidden}
+.ag-hm-band.morning{border-color:color-mix(in srgb,var(--orange) 70%,var(--panel))}
+.ag-hm-band.day{border-color:color-mix(in srgb,var(--blue) 60%,var(--panel))}
+.ag-hm-band.night{border-color:color-mix(in srgb,var(--violet) 60%,var(--panel))}
+.ag-hm-hour{font-size:9px;color:var(--muted);text-align:left}
+.ag-hm-row{display:contents}
+.ag-hm-day{font-size:10px;color:var(--muted);align-self:center}
+
+.ag-hm-cell{display:block;aspect-ratio:1/1;min-height:14px;border-radius:3px;background:var(--grid)}
+.ag-hm-cell.s0{background:var(--grid)}
+.ag-hm-cell.s1{background:color-mix(in srgb,var(--blue) 22%,var(--panel))}
+.ag-hm-cell.s2{background:color-mix(in srgb,var(--blue) 45%,var(--panel))}
+.ag-hm-cell.s3{background:color-mix(in srgb,var(--blue) 70%,var(--panel))}
+.ag-hm-cell.s4{background:var(--blue)}
+.ag-hm-row .ag-hm-cell:hover{outline:2px solid var(--text);outline-offset:1px}
+
+.ag-hm-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;font-size:10.5px;color:var(--muted)}
+.ag-hm-legend{display:inline-flex;align-items:center;gap:4px}
+.ag-hm-legend .ag-hm-cell{width:14px;min-height:14px;aspect-ratio:auto;height:14px}
+
+@media (max-width:640px){
+  .ag-heat .ag-panel-h{flex-direction:column;gap:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ag-hm-cell{transition:none}
+}
