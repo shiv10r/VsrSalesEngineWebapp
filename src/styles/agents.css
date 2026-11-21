@@ -13,6 +13,7 @@
 .ag-top-info b{display:block;color:var(--text);font-size:12px;font-weight:700}
 .ag-run-state{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--text)}
 .ag-top-actions{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ag-top-buttons{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .ag-reason{font-size:10px;color:var(--muted);max-width:260px;text-align:right}
 
 /* avatar + status dot */

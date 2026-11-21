@@ -1,4 +1,4 @@
-import { Play } from 'lucide-react';
+import { Play, Settings } from 'lucide-react';
 import type { AgentsOverview } from '../../types/agents';
 import { absoluteTime, relativeTime, runNowDisabledReason } from '../../utils/agentFormat';
 import { Button } from '../ui/Primitives';
@@ -9,6 +9,7 @@ interface Props {
   guest: boolean;
   starting: boolean;
   onRun: () => void;
+  onOpenSettings: () => void;
 }
 
 function TimeBlock({ label, iso, now }: { label: string; iso: string | null; now: number }) {
@@ -20,7 +21,7 @@ function TimeBlock({ label, iso, now }: { label: string; iso: string | null; now
   );
 }
 
-export function AgentsHeader({ overview, now, guest, starting, onRun }: Props) {
+export function AgentsHeader({ overview, now, guest, starting, onRun, onOpenSettings }: Props) {
   const { lastRun, nextRunAtUtc, runInProgress } = overview;
   const reason = runNowDisabledReason({ guest, runInProgress, starting });
   const stateText = runInProgress ? 'Running now' : lastRun ? `Last run ${lastRun.status}` : 'No run yet';
@@ -43,9 +44,12 @@ export function AgentsHeader({ overview, now, guest, starting, onRun }: Props) {
         <TimeBlock label="Next run" iso={nextRunAtUtc} now={now} />
       </div>
       <div className="ag-top-actions">
-        <Button variant="primary" icon={Play} disabled={reason !== null} onClick={onRun}>
-          {starting ? 'Starting…' : 'Run agents now'}
-        </Button>
+        <div className="ag-top-buttons">
+          <Button icon={Settings} onClick={onOpenSettings}>Settings</Button>
+          <Button variant="primary" icon={Play} disabled={reason !== null} onClick={onRun}>
+            {starting ? 'Starting…' : 'Run agents now'}
+          </Button>
+        </div>
         {reason && <span className="ag-reason">{reason}</span>}
       </div>
     </div>
