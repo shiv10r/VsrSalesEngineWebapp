@@ -1,5 +1,6 @@
 import { DashboardScreen } from './DashboardScreen';
 import { AgentsScreen } from './AgentsScreen';
+import { LocalLeadsScreen } from './LocalLeadsScreen';
 import { OpportunitiesScreen } from './OpportunitiesScreen';
 import { DiscoverScreen } from './DiscoverScreen';
 import { SearchResultsScreen } from './SearchResultsScreen';
@@ -20,6 +21,8 @@ export function PageRouter({ ctx }: { ctx: AppCtx }) {
       return <DashboardScreen ctx={ctx} />;
     case 'Opportunities':
       return <OpportunitiesScreen ctx={ctx} />;
+    case 'Local Leads':
+      return <LocalLeadsScreen ctx={ctx} />;
     case 'Discover':
       return <DiscoverScreen ctx={ctx} />;
     case 'Search results':
