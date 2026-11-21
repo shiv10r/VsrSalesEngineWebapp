@@ -2,6 +2,40 @@ import { API_BASE_URL, ApiCore } from './http';
 import type {
   AgentEvent, AgentEventsQuery, AgentRun, AgentsOverview, HeatmapData, RunNowResult,
 } from '../types/agents';
+import type {
+  AgentSettings, FieldError, SaveSettingsResult, SettingsDraft,
+} from '../types/agentSettings';
+
+function isFieldError(v: unknown): v is FieldError {
+  return !!v && typeof (v as FieldError).field === 'string' && typeof (v as FieldError).message === 'string';
+}
+
+async function saveSettings(core: ApiCore, body: SettingsDraft): Promise<SaveSettingsResult> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/agents/settings`, {
+      method: 'PUT',
+      headers: core.getHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return { ok: true, settings: (await res.json()) as AgentSettings };
+    if (res.status === 400) {
+      const data = await res.json().catch(() => ({}));
+      const errors: FieldError[] = Array.isArray(data?.errors) ? data.errors.filter(isFieldError) : [];
+      return {
+        ok: false,
+        reason: 'validation',
+        errors,
+        message: errors.length > 0 ? 'Some settings need fixing.' : String(data?.message ?? 'The settings were rejected.'),
+      };
+    }
+    if (res.status === 403) {
+      return { ok: false, reason: 'forbidden', message: "Guests can't change settings. Sign in to edit." };
+    }
+    return { ok: false, reason: 'error', message: `Could not save settings (server responded ${res.status}).` };
+  } catch {
+    return { ok: false, reason: 'error', message: 'Could not reach the agents service.' };
+  }
+}
 
 export function buildEventsPath(query: AgentEventsQuery = {}): string {
   const params = new URLSearchParams();
@@ -35,6 +69,11 @@ export function createAgentsApi(core: ApiCore) {
 
     getAgentEvents: (query: AgentEventsQuery = {}): Promise<AgentEvent[]> =>
       getJson<AgentEvent[]>(core, buildEventsPath(query)),
+
+    getAgentSettings: (): Promise<AgentSettings> =>
+      getJson<AgentSettings>(core, '/agents/settings'),
+
+    saveAgentSettings: (body: SettingsDraft): Promise<SaveSettingsResult> => saveSettings(core, body),
 
     async runAgentsNow(): Promise<RunNowResult> {
       try {
