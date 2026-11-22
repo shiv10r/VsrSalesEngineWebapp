@@ -2,6 +2,8 @@ import type {
   AgentCardData, AgentEvent, AgentId, AgentRun,
 } from '../types/agents';
 
+import { safeHttpUrl } from './safeUrl';
+
 const MAX_EVENTS = 500;
 
 /** Static presentation only (colour per persona). Names and roles always come from the API. */
@@ -104,16 +106,8 @@ export function scoreTone(score: number | null | undefined): ScoreTone {
   return score >= 70 ? 'high' : score >= 50 ? 'mid' : 'low';
 }
 
-/** Only http(s) links are ever rendered as hrefs. */
-export function safeUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null;
-  } catch {
-    return null;
-  }
-}
+/** Only http(s) links are ever rendered as hrefs (shared rule in safeUrl.ts). */
+export const safeUrl = safeHttpUrl;
 
 export const FAST_POLL_MS = 2000;
 export const SLOW_POLL_MS = 10000;

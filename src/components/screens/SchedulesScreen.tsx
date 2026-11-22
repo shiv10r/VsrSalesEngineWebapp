@@ -5,60 +5,21 @@ import type { AppCtx } from '../../appContext';
 export function SchedulesScreen({ ctx }: { ctx: AppCtx }) {
   const {
     schedules, pageHeading, setModal, isRunningSchedule, handleRunScheduleNow, handleToggleSchedule,
-    handleDeleteSchedule,
+    handleDeleteSchedule, schedulesError,
   } = ctx;
 
-  const activeSchedules = schedules.length > 0 ? schedules : [
-    {
-      id: 'SCHED-001',
-      name: 'Daily opportunity discovery',
-      description: 'Company career pages and permitted public feeds',
-      frequency: 'Weekdays',
-      cronExpression: '0 8 * * 1-5',
-      timezone: 'UTC',
-      isEnabled: true,
-      profileId: 'PROF-001',
-      selectedSources: ['SRC-001', 'SRC-002', 'SRC-005'],
-      runCap: 50,
-      quietHoursStart: '22:00',
-      quietHoursEnd: '06:00',
-      lastRunAtUtc: new Date(Date.now() - 3600000 * 4).toISOString(),
-      nextRunAtUtc: new Date(Date.now() + 3600000 * 20).toISOString(),
-      lastRunStatus: 'Completed',
-      createdBy: 'system',
-      createdAtUtc: new Date().toISOString(),
-      updatedAtUtc: new Date().toISOString(),
-    },
-    {
-      id: 'SCHED-002',
-      name: 'Weekly procurement scan',
-      description: 'Selected public procurement portals',
-      frequency: 'Weekly',
-      cronExpression: '0 9 * * 1',
-      timezone: 'UTC',
-      isEnabled: false,
-      profileId: 'PROF-002',
-      selectedSources: ['SRC-004'],
-      runCap: 25,
-      quietHoursStart: '22:00',
-      quietHoursEnd: '06:00',
-      lastRunAtUtc: new Date(Date.now() - 86400000 * 6).toISOString(),
-      nextRunAtUtc: new Date(Date.now() + 86400000 * 1).toISOString(),
-      lastRunStatus: 'Completed',
-      createdBy: 'system',
-      createdAtUtc: new Date().toISOString(),
-      updatedAtUtc: new Date().toISOString(),
-    }
-  ];
+  const activeSchedules = schedules;
 
   return (
     <>
-      {pageHeading('Schedules & automation', 'Set recurring searches and follow-ups. Every run is visible, idempotent, and protected by distributed locks.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'schedule' })}>New schedule</Button>, 'AUTOMATION CONTROL')}
+      {pageHeading('Schedules & automation', 'Set recurring lead searches. Every run is visible, idempotent, and protected by distributed locks.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'schedule' })}>New schedule</Button>, 'AUTOMATION CONTROL')}
       <div className="notice-inline" style={{ marginBottom: '16px' }}>
         <ShieldCheck size={16} />
-        <span>Worker safety: Scheduled executions acquire distributed transaction-safe run locks to prevent duplicate sends and conflicting scraper runs.</span>
+        <span>Worker safety: Scheduled executions acquire distributed transaction-safe run locks to prevent duplicate and overlapping runs.</span>
       </div>
       <section className="panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+        {schedulesError && <p className="muted-cell" role="alert">Could not load the schedules from the server. Check the connection and reopen this page.</p>}
+        {!schedulesError && activeSchedules.length === 0 && <p className="muted-cell">No schedules yet. Create one with New schedule.</p>}
         {activeSchedules.map(s => (
           <div className="schedule-row" key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '8px' }}>
             <div className="schedule-info" style={{ flex: 1 }}>

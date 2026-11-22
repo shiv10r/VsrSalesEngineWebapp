@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '../utils/safeUrl';
 import { Building2, ExternalLink, Globe2, MapPin, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Pill } from './ui/Primitives';
@@ -128,16 +129,20 @@ export function DetailDrawer({
           {/* Sourcing Link Card */}
           {item.sourceUrl && (
             <div className="drawer-evidence-card" style={{ borderLeftColor: '#0ea5e9' }}>
-              <strong>Verified Sourcing URL</strong>
-              <a
-                href={item.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-link"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', marginTop: '4px' }}
-              >
-                <Globe2 size={13} /> {item.sourceUrl} <ExternalLink size={12} />
-              </a>
+              <strong>Source URL</strong>
+              {safeHttpUrl(item.sourceUrl) ? (
+                <a
+                  href={safeHttpUrl(item.sourceUrl)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-link"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', marginTop: '4px' }}
+                >
+                  <Globe2 size={13} /> {item.sourceUrl} <ExternalLink size={12} />
+                </a>
+              ) : (
+                <span style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{item.sourceUrl}</span>
+              )}
             </div>
           )}
 

@@ -12,6 +12,7 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
 
   const [sources, setSources] = useState<SourceDefinition[]>([]);
   const [searchProfiles, setSearchProfiles] = useState<SearchProfile[]>([]);
+  const [sourcesError, setSourcesError] = useState(false);
   const [lastRunResult, setLastRunResult] = useState<DiscoveryRunResult | null>(null);
   const [isRunningDiscovery, setIsRunningDiscovery] = useState(false);
 
@@ -23,8 +24,11 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
       ]);
       setSources(srcData ?? []);
       setSearchProfiles(profData ?? []);
+      setSourcesError(false);
     } catch {
-      // The server banner already says when it cannot be reached; keep what is on screen.
+      setSources([]);
+      setSearchProfiles([]);
+      setSourcesError(true);
     }
   };
 
@@ -67,7 +71,7 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
   };
 
   return {
-    sources, setSources, searchProfiles, setSearchProfiles, lastRunResult, setLastRunResult,
+    sources, sourcesError, setSources, searchProfiles, setSearchProfiles, lastRunResult, setLastRunResult,
     isRunningDiscovery, setIsRunningDiscovery, loadSourcesAndProfiles,
     handleUpdateSourceStatus, handleRunDiscovery,
   };

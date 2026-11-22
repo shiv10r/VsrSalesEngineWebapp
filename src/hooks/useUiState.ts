@@ -17,6 +17,7 @@ export function useUiState() {
 
   const [settingsTab, setSettingsTab] = useState('General');
   const [dark, setDark] = useState(false);
+  const [signInNotice, setSignInNotice] = useState('');
 
   const notify = (msg: string) => {
     setToast(msg);
@@ -32,7 +33,7 @@ export function useUiState() {
     setStatusFilter, sourceFilter, setSourceFilter, activeTab, setActiveTab, modal, setModal,
     toast, setToast, mobileNav, setMobileNav, sidebarCollapsed, setSidebarCollapsed,
     settingsTab, setSettingsTab, dark,
-    setDark, notify, go,
+    setDark, notify, go, signInNotice, setSignInNotice,
   };
 }
 

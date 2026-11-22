@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '../../utils/safeUrl';
 import { Mail, Plus, Trash2 } from 'lucide-react';
 import { Button, Pill } from '../ui/Primitives';
 import { LinkedInHandoff } from '../linkedin/LinkedInHandoff';
@@ -7,13 +8,15 @@ import type { AppCtx } from '../../appContext';
 export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
   const {
     pageHeading, setModal, contacts, handleQualifyContact, handleDeleteContact,
-    opportunities, guestMode, notify, handleMarkLinkedInRequested,
+    opportunities, guestMode, notify, handleMarkLinkedInRequested, contactsError,
   } = ctx;
 
   return (
     <>
       {pageHeading('Contacts', 'Keep people, source evidence, communication preference and do-not-contact status together.', <Button variant="primary" icon={Plus} onClick={() => setModal({ type: 'contact' })}>Add contact</Button>, 'RELATIONSHIP MANAGEMENT')}
       <section className="panel table-panel">
+        {contactsError && <p className="muted-cell" role="alert" style={{ padding: '12px 16px' }}>Could not load contacts from the server. Reopen this page to try again.</p>}
+        {!contactsError && contacts.length === 0 && <p className="muted-cell" style={{ padding: '12px 16px' }}>No contacts yet. Add one, or run the agents to collect public contacts.</p>}
         <div className="table-wrap">
           <table>
             <thead><tr><th>CONTACT</th><th>COMPANY</th><th>ROLE</th><th>EMAIL / CHANNEL</th><th>SOURCE & PROVENANCE</th><th>QUALIFICATION</th><th>LINKEDIN (MANUAL)</th><th>ACTIONS</th></tr></thead>
@@ -29,8 +32,8 @@ export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
                   <td><span className="email-cell"><Mail size={13} />{c.email}</span></td>
                   <td className="muted-cell">
                     <div>{c.source}</div>
-                    {c.sourceUrl && (
-                      <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'underline' }}>
+                    {safeHttpUrl(c.sourceUrl) && (
+                      <a href={safeHttpUrl(c.sourceUrl)!} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'underline' }}>
                         Source link
                       </a>
                     )}

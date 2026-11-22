@@ -4,11 +4,12 @@ import {
 } from 'lucide-react';
 import { Button, EmptyHint, Pill } from './ui/Primitives';
 import { Opportunity } from '../types';
+import { safeHttpUrl } from '../utils/safeUrl';
 import { statusTone } from '../utils/statusTone';
 import type { BaseCtx } from '../hooks/useBaseController';
 
 export function makePageHelpers(ctx: BaseCtx) {
-  const { query, setQuery, statusFilter, setStatusFilter, sourceFilter, setSourceFilter, opportunities, filteredOpportunities, setDetail, handleDeleteOpportunity } = ctx;
+  const { query, setQuery, statusFilter, setStatusFilter, sourceFilter, setSourceFilter, opportunities, filteredOpportunities, setDetail, handleDeleteOpportunity, opportunitiesError } = ctx;
 
   function pageHeading(title: string, subtitle: string, actions: any = null, eyebrow: any = null) {
     return (
@@ -108,8 +109,8 @@ export function makePageHelpers(ctx: BaseCtx) {
                 <td className="muted-cell">{o.found}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {o.sourceUrl && (
-                      <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="row-more" title="Open live external posting" onClick={(e) => e.stopPropagation()}>
+                    {safeHttpUrl(o.sourceUrl) && (
+                      <a href={safeHttpUrl(o.sourceUrl)!} target="_blank" rel="noopener noreferrer" className="row-more" title="Open live external posting" onClick={(e) => e.stopPropagation()}>
                         <ExternalLink size={14} />
                       </a>
                     )}
@@ -123,8 +124,8 @@ export function makePageHelpers(ctx: BaseCtx) {
         </table>
         {rows.length === 0 && (
           <EmptyHint
-            title="No matching opportunities"
-            description="Try changing your search or filters."
+            title={opportunitiesError ? 'Could not load opportunities' : 'No matching opportunities'}
+            description={opportunitiesError ? 'The server did not answer. Check the connection and reopen this page.' : 'Try changing your search or filters.'}
             icon={Search}
             action="Clear filters"
             onAction={() => { setQuery(''); setStatusFilter('All statuses'); setSourceFilter('All sources'); }}

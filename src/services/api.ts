@@ -1,4 +1,4 @@
-import { ApiCore } from './http';
+import { ApiCore, withUnauthorizedHandling } from './http';
 import { createAuthApi } from './auth';
 import { createOpportunitiesApi } from './opportunities';
 import { createSourcesApi } from './sources';
@@ -12,6 +12,10 @@ const core = new ApiCore();
 export const api = {
   setToken: (token: string | null) => core.setToken(token),
   getToken: () => core.getToken(),
+  /** Installs the shared 401 handling on fetch. Call once at startup. */
+  onSessionExpired: (handler: () => void) => {
+    window.fetch = withUnauthorizedHandling(window.fetch.bind(window), core, handler);
+  },
   ...createAuthApi(core),
   ...createOpportunitiesApi(core),
   ...createSourcesApi(core),
