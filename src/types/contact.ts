@@ -1,3 +1,5 @@
+export type RelationToPost = 'poster' | 'decision-maker' | 'hiring' | 'engineering' | 'mentioned';
+
 export interface Contact {
   id: string;
   name: string;
@@ -10,6 +12,8 @@ export interface Contact {
   status: 'Not contacted' | 'Replied' | 'Follow-up due' | 'Do not contact' | 'Qualified' | string;
   qualificationStatus?: 'Unverified' | 'Verified' | 'BlockedByPolicy' | 'OptedOut' | 'Qualified' | string;
   isRoleAccount?: boolean;
+  /** How this person is connected to the post (from the backend), or null when unknown. */
+  relationToPost?: RelationToPost | null;
   notes?: string;
   createdBy?: string;
   createdAtUtc?: string;

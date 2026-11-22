@@ -1,10 +1,13 @@
 import { Mail, Plus, Trash2 } from 'lucide-react';
 import { Button, Pill } from '../ui/Primitives';
+import { LinkedInHandoff } from '../linkedin/LinkedInHandoff';
+import { LINKEDIN_CAPTION, openingFor } from '../../utils/linkedinHandoff';
 import type { AppCtx } from '../../appContext';
 
 export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
   const {
     pageHeading, setModal, contacts, handleQualifyContact, handleDeleteContact,
+    opportunities, guestMode, notify, handleMarkLinkedInRequested,
   } = ctx;
 
   return (
@@ -13,7 +16,7 @@ export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
       <section className="panel table-panel">
         <div className="table-wrap">
           <table>
-            <thead><tr><th>CONTACT</th><th>COMPANY</th><th>ROLE</th><th>EMAIL / CHANNEL</th><th>SOURCE & PROVENANCE</th><th>QUALIFICATION</th><th>ACTIONS</th></tr></thead>
+            <thead><tr><th>CONTACT</th><th>COMPANY</th><th>ROLE</th><th>EMAIL / CHANNEL</th><th>SOURCE & PROVENANCE</th><th>QUALIFICATION</th><th>LINKEDIN (MANUAL)</th><th>ACTIONS</th></tr></thead>
             <tbody>
               {contacts.map(c => (
                 <tr key={c.id || c.email}>
@@ -37,6 +40,16 @@ export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
                     <Pill type={c.qualificationStatus === 'Verified' ? 'green' : c.qualificationStatus === 'BlockedByPolicy' || c.qualificationStatus === 'OptedOut' ? 'red' : 'neutral'}>
                       {c.qualificationStatus || 'Unverified'}
                     </Pill>
+                  </td>
+                  <td>
+                    <LinkedInHandoff
+                      compact
+                      contact={c}
+                      openingTitle={openingFor(opportunities, c.company)}
+                      guest={guestMode}
+                      onNotify={notify}
+                      onMarkRequested={handleMarkLinkedInRequested}
+                    />
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -74,6 +87,7 @@ export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
           </table>
         </div>
       </section>
+      <p className="li-caption">{LINKEDIN_CAPTION}</p>
     </>
   );
 }

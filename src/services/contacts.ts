@@ -1,5 +1,6 @@
 import { API_BASE_URL, ApiCore } from './http';
 import { Contact } from '../types';
+import { toRelation } from '../utils/linkedinHandoff';
 
 export function createContactsApi(core: ApiCore) {
   function mapContact(c: any): Contact {
@@ -15,6 +16,7 @@ export function createContactsApi(core: ApiCore) {
       status: c.status,
       qualificationStatus: c.qualificationStatus,
       isRoleAccount: c.isRoleAccount,
+      relationToPost: toRelation(c.relationToPost),
       notes: c.notes,
       createdBy: c.createdBy,
       createdAtUtc: c.createdAtUtc,

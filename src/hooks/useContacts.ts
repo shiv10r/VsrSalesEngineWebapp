@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { seedContacts } from '../data/seeds';
 import { api } from '../services/api';
 import { Contact } from '../types';
+import { NOT_CONTACTED_STATUS, REQUESTED_STATUS } from '../utils/linkedinHandoff';
 import type { UiState } from './useUiState';
 
 export function useContacts(ui: UiState) {
@@ -65,6 +66,19 @@ export function useContacts(ui: UiState) {
     }
   };
 
+  /** Record that the person sent a LinkedIn request themselves. Uses the existing contact update API. */
+  const handleMarkLinkedInRequested = async (contact: Contact, requested: boolean) => {
+    const status = requested ? REQUESTED_STATUS : NOT_CONTACTED_STATUS;
+    const updated = await api.qualifyContact(contact.id, contact.qualificationStatus || 'Unverified', status);
+    if (updated) {
+      setContacts(prev => prev.map(c => c.id === contact.id ? updated : c));
+      notify(requested ? `Marked ${updated.name} as LinkedIn requested` : `Cleared the LinkedIn mark for ${updated.name}`);
+    } else {
+      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, status } : c));
+      notify('Saved on this device only: the server could not be reached');
+    }
+  };
+
   const handleDeleteContact = async (id: string) => {
     if (window.confirm(`Are you sure you want to delete contact ${id}?`)) {
       await api.deleteContact(id);
@@ -75,7 +89,7 @@ export function useContacts(ui: UiState) {
 
   return {
     contacts, setContacts, loadContacts, handleCreateContact, handleQualifyContact,
-    handleDeleteContact,
+    handleDeleteContact, handleMarkLinkedInRequested,
   };
 }
 

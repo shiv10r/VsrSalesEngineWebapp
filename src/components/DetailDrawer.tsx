@@ -1,21 +1,28 @@
 import { Building2, ExternalLink, Globe2, MapPin, Send, ShieldAlert, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Pill } from './ui/Primitives';
-import { Opportunity } from '../types';
+import { Contact, Opportunity } from '../types';
 import { statusTone } from '../utils/statusTone';
+import { LinkedInSection } from './linkedin/LinkedInSection';
 
 export function DetailDrawer({
   item,
   onClose,
   onNotify,
   onStatusChange,
-  onArchive
+  onArchive,
+  contacts,
+  guest,
+  onMarkLinkedIn
 }: {
   item: Opportunity;
   onClose: () => void;
   onNotify: (msg: string) => void;
   onStatusChange: (item: Opportunity, newStatus: string, reason?: string) => void;
   onArchive: (item: Opportunity) => void;
+  contacts: Contact[];
+  guest: boolean;
+  onMarkLinkedIn: (contact: Contact, requested: boolean) => Promise<void> | void;
 }) {
   const [selectedStatus, setSelectedStatus] = useState(item.status);
   const [reason, setReason] = useState('');
@@ -154,6 +161,15 @@ export function DetailDrawer({
               </div>
             </div>
           )}
+
+          <LinkedInSection
+            company={item.company}
+            contacts={contacts}
+            openingTitle={item.title}
+            guest={guest}
+            onNotify={onNotify}
+            onMarkRequested={onMarkLinkedIn}
+          />
 
           {/* Status Audit Trail */}
           {item.statusHistory && item.statusHistory.length > 0 && (
