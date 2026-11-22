@@ -1,4 +1,4 @@
-const STEPS = ['Find', 'Filter', 'De-duplicate', 'Score', 'Find contacts', 'Draft', 'Check compliance', 'Report'];
+const STEPS = ['Find', 'Filter', 'De-duplicate', 'Score', 'Find contacts', 'Report'];
 
 export const SignInAside = () => (
   <aside className="si-aside">
@@ -10,8 +10,8 @@ export const SignInAside = () => (
     <div className="si-pitch">
       <h1>Leads found while you work on something else.</h1>
       <p>
-        A team of eight agents reads live job boards every two hours, filters and scores what it finds,
-        and drafts the outreach. You approve before anything is sent.
+        A team of six agents finds leads on live job boards every two hours, filters out what does not fit,
+        removes duplicates, scores each lead and looks for a public contact. Nothing is ever sent for you.
       </p>
       <ol className="si-steps" aria-label="How the agents work">
         {STEPS.map((step, i) => (
@@ -23,6 +23,6 @@ export const SignInAside = () => (
       </ol>
     </div>
 
-    <p className="si-foot">Outreach stays in test mode until a sending domain is verified.</p>
+    <p className="si-foot">Local business leads come from Google Maps and your own imports.</p>
   </aside>
 );

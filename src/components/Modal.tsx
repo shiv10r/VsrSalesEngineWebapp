@@ -1,17 +1,15 @@
-import { Plus, Sparkles, X } from 'lucide-react';
-import { AiAssistant } from './modal/AiAssistant';
-import { CampaignFields } from './modal/CampaignFields';
+import { Plus, X } from 'lucide-react';
 import { ContactFields } from './modal/ContactFields';
 import { OpportunityFields } from './modal/OpportunityFields';
 import { ScheduleFields } from './modal/ScheduleFields';
 import { useModalForm } from './modal/useModalForm';
 import { Button } from './ui/Primitives';
 
-export function Modal({ modal, onClose, onNotify, onCreate }: any) {
-  const form = useModalForm(modal, onNotify);
+export function Modal({ modal, onClose, onCreate }: any) {
+  const form = useModalForm();
   const {
-    name, secondary, contactRole, contactEmail, source, location, fit, type, docs,
-    vendorRequirementNotes, sourceUrl, channelBasis, contactNotes, evidenceSnippet, frequency,
+    name, secondary, contactRole, contactEmail, source, location, fit, type,
+    sourceUrl, channelBasis, contactNotes, evidenceSnippet, frequency,
     runCap, quietStart, quietEnd, timezone,
   } = form;
 
@@ -20,12 +18,8 @@ export function Modal({ modal, onClose, onNotify, onCreate }: any) {
       <div className="modal-box modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '620px' }}>
         <div className="modal-header">
           <div>
-            <div className="ai-assistant-badge" style={{ marginBottom: '4px' }}>
-              <Sparkles size={11} /> Smart Form System
-            </div>
             <h3>
-              {modal.type === 'campaign' ? 'Create Sales Campaign' :
-               modal.type === 'contact' ? 'Add Contact' :
+              {modal.type === 'contact' ? 'Add Contact' :
                modal.type === 'opportunity' ? 'Add Opportunity' :
                modal.type === 'schedule' ? 'New Automation Schedule' : 'Information'}
             </h3>
@@ -33,10 +27,6 @@ export function Modal({ modal, onClose, onNotify, onCreate }: any) {
           <button className="icon-button" onClick={onClose} aria-label="Close modal"><X size={16} /></button>
         </div>
         <div className="modal-body">
-          {modal.type !== 'help' && <AiAssistant form={form} modal={modal} />}
-
-          {modal.type === 'campaign' && <CampaignFields form={form} />}
-
           {modal.type === 'schedule' && <ScheduleFields form={form} />}
 
           {modal.type === 'contact' && <ContactFields form={form} />}
@@ -45,7 +35,7 @@ export function Modal({ modal, onClose, onNotify, onCreate }: any) {
 
           {modal.type === 'help' && (
             <p style={{ lineHeight: 1.6, color: 'var(--text)' }}>
-              Welcome to VSR Sales Engine. Use the left navigation to explore opportunities, build automated discovery runs, draft compliance-verified outreach, and verify vendor readiness documentation.
+              Welcome to VSR Sales Engine. Use the left navigation to find local business leads, review job-posting opportunities, keep contacts and schedule the lead-finding agents.
             </p>
           )}
         </div>
@@ -59,13 +49,10 @@ export function Modal({ modal, onClose, onNotify, onCreate }: any) {
               role: contactRole,
               email: contactEmail,
               title: secondary,
-              audience: secondary,
               source,
               location,
               fit,
               opportunityType: type,
-              docs,
-              vendorRequirementNotes,
               sourceUrl,
               channelBasis,
               notes: contactNotes,
@@ -76,7 +63,7 @@ export function Modal({ modal, onClose, onNotify, onCreate }: any) {
               quietHoursEnd: quietEnd,
               timezone,
             })}>
-              <Plus size={14} style={{ marginRight: '6px' }} /> Create {modal.type === 'opportunity' ? 'Opportunity' : modal.type === 'contact' ? 'Contact' : modal.type === 'campaign' ? 'Campaign' : 'Schedule'}
+              <Plus size={14} style={{ marginRight: '6px' }} /> Create {modal.type === 'opportunity' ? 'Opportunity' : modal.type === 'contact' ? 'Contact' : 'Schedule'}
             </Button>
           )}
         </div>

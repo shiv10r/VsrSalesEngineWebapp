@@ -1,18 +1,10 @@
-import { API_BASE_URL, ApiCore } from './http';
+import { API_BASE_URL, ApiCore, fetchList } from './http';
 import { AutomationSchedule, ScheduleRunResult } from '../types';
 
 export function createSchedulesApi(core: ApiCore) {
   const methods = {
     async getSchedules(): Promise<AutomationSchedule[]> {
-      try {
-        const res = await fetch(`${API_BASE_URL}/schedules`, { headers: core.getHeaders() });
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch {
-        // Fallback
-      }
-      return [];
+      return fetchList(core, '/schedules', 'schedules');
     },
 
     async createSchedule(data: {

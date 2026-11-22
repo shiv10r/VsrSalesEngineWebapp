@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiCore } from './http';
+import { API_BASE_URL, ApiCore, fetchList } from './http';
 import { CreateOpportunityPayload, Opportunity } from '../types';
 
 export function createOpportunitiesApi(core: ApiCore) {
@@ -13,8 +13,6 @@ export function createOpportunitiesApi(core: ApiCore) {
       status: o.status,
       fit: o.fit,
       type: o.type,
-      docs: o.hasVendorDocRequirements ?? false,
-      vendorRequirementNotes: o.vendorRequirementNotes,
       sourceUrl: o.sourceUrl,
       evidenceSnippet: o.evidenceSnippet,
       statusHistory: o.statusHistory || [],
@@ -23,25 +21,16 @@ export function createOpportunitiesApi(core: ApiCore) {
 
   const methods = {
     async getOpportunities(params?: { query?: string; status?: string; source?: string; fit?: string }): Promise<Opportunity[]> {
-      try {
-        const searchParams = new URLSearchParams();
-        if (params?.query) searchParams.append('query', params.query);
-        if (params?.status && params.status !== 'All statuses') searchParams.append('status', params.status);
-        if (params?.source && params.source !== 'All sources') searchParams.append('source', params.source);
-        if (params?.fit) searchParams.append('fit', params.fit);
-        searchParams.append('pageSize', '100');
+      const searchParams = new URLSearchParams();
+      if (params?.query) searchParams.append('query', params.query);
+      if (params?.status && params.status !== 'All statuses') searchParams.append('status', params.status);
+      if (params?.source && params.source !== 'All sources') searchParams.append('source', params.source);
+      if (params?.fit) searchParams.append('fit', params.fit);
+      searchParams.append('pageSize', '100');
 
-        const url = `${API_BASE_URL}/opportunities?${searchParams.toString()}`;
-        const res = await fetch(url, { headers: core.getHeaders() });
-        if (res.ok) {
-          const data = await res.json();
-          const items = data.items ? data.items : (Array.isArray(data) ? data : []);
-          return items.map((o: any) => mapOpportunity(o));
-        }
-      } catch {
-        // Fallback to local state if server offline
-      }
-      return [];
+      const data = await fetchList(core, `/opportunities?${searchParams.toString()}`, 'opportunities');
+      const items = data.items ? data.items : (Array.isArray(data) ? data : []);
+      return items.map((o: any) => mapOpportunity(o));
     },
 
     async getOpportunityById(id: string): Promise<Opportunity | null> {

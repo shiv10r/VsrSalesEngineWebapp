@@ -1,6 +1,6 @@
 export type AgentId =
   | 'scout' | 'filter' | 'dedupe' | 'scorer'
-  | 'contact-finder' | 'drafter' | 'compliance' | 'reporter';
+  | 'contact-finder' | 'reporter';
 
 export type AgentStatus = 'working' | 'idle' | 'waiting' | 'error';
 export type AgentEventKind = 'thought' | 'action' | 'result' | 'handoff' | 'warning';
@@ -33,7 +33,6 @@ export interface AgentRun {
   newLeads: number;
   duplicates: number;
   rejected: number;
-  draftsReady: number;
 }
 
 export interface AgentLead {

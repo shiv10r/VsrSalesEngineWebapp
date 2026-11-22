@@ -7,16 +7,17 @@ export function useSchedules(ui: UiState) {
   const { notify, userEmail } = ui;
 
   const [schedules, setSchedules] = useState<AutomationSchedule[]>([]);
+  const [schedulesError, setSchedulesError] = useState(false);
   const [isRunningSchedule, setIsRunningSchedule] = useState<string | null>(null);
 
   const loadSchedules = async () => {
     try {
       const data = await api.getSchedules();
-      if (data && data.length > 0) {
-        setSchedules(data);
-      }
+      setSchedules(data ?? []);
+      setSchedulesError(false);
     } catch {
-      // Fallback
+      setSchedules([]);
+      setSchedulesError(true);
     }
   };
 
@@ -91,7 +92,7 @@ export function useSchedules(ui: UiState) {
   };
 
   return {
-    schedules, setSchedules, isRunningSchedule, setIsRunningSchedule, loadSchedules,
+    schedules, schedulesError, setSchedules, isRunningSchedule, setIsRunningSchedule, loadSchedules,
     handleToggleSchedule, handleRunScheduleNow, handleCreateSchedule, handleDeleteSchedule,
   };
 }

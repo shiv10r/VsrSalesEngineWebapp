@@ -8,13 +8,16 @@ export function useContacts(ui: UiState) {
   const { notify } = ui;
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactsError, setContactsError] = useState(false);
 
   const loadContacts = async () => {
     try {
       const data = await api.getContacts();
       setContacts(data ?? []);
+      setContactsError(false);
     } catch {
-      // The server banner already says when it cannot be reached; keep what is on screen.
+      setContacts([]);
+      setContactsError(true);
     }
   };
 
@@ -68,7 +71,7 @@ export function useContacts(ui: UiState) {
   };
 
   return {
-    contacts, setContacts, loadContacts, handleCreateContact, handleQualifyContact,
+    contacts, contactsError, setContacts, loadContacts, handleCreateContact, handleQualifyContact,
     handleDeleteContact, handleMarkLinkedInRequested,
   };
 }

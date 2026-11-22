@@ -180,5 +180,4 @@ export function handoffBlockedReason(c: Contact): string | null {
 export const isRequested = (c: Contact) => c.status === REQUESTED_STATUS;
 
 /** Only plain web links are shown, so a stored value can never become a script link. */
-export const safeHttpUrl = (url?: string): string | undefined =>
-  url && /^https?:\/\//i.test(url.trim()) ? url.trim() : undefined;
+export { safeHttpUrl } from './safeUrl';

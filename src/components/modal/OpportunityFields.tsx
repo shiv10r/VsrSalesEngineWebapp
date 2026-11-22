@@ -4,8 +4,7 @@ import type { ModalForm } from './useModalForm';
 export function OpportunityFields({ form }: { form: ModalForm }) {
   const {
     name, setName, secondary, setSecondary, source, setSource, location, setLocation, fit,
-    setFit, type, setType, sourceUrl, setSourceUrl, evidenceSnippet, setEvidenceSnippet, docs,
-    setDocs, vendorRequirementNotes, setVendorRequirementNotes,
+    setFit, type, setType, sourceUrl, setSourceUrl, evidenceSnippet, setEvidenceSnippet,
   } = form;
 
   return (
@@ -62,17 +61,6 @@ export function OpportunityFields({ form }: { form: ModalForm }) {
         <label className="form-label">Captured Evidence Snippet</label>
         <textarea className="form-textarea" rows={2} value={evidenceSnippet} onChange={e => setEvidenceSnippet(e.target.value)} placeholder="Raw text evidence from posting..." />
       </div>
-      <div className="form-section-divider">Vendor Procurement Gate</div>
-      <label className="form-checkbox-label">
-        <input type="checkbox" checked={docs} onChange={e => setDocs(e.target.checked)} />
-        <span>Requires Vendor Registration / Procurement Documentation</span>
-      </label>
-      {docs && (
-        <div className="form-group" style={{ marginTop: '8px' }}>
-          <label className="form-label">Vendor Documentation Notes</label>
-          <input className="form-input" value={vendorRequirementNotes} onChange={e => setVendorRequirementNotes(e.target.value)} placeholder="e.g. GST registration, ISO certification, vendor portal setup required" />
-        </div>
-      )}
     </>
   );
 }

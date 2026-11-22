@@ -1,5 +1,6 @@
 import type { LocalLeadSummary } from '../types/localLeads';
 import { intensityStep } from './heatmapFormat';
+import { safeWebsiteUrl } from './safeUrl';
 
 export interface DistrictCategoryGridData {
   districts: string[];
@@ -39,16 +40,7 @@ export function topOf<T extends { count: number }>(items: T[]): T | null {
 }
 
 /** Only http(s) links are ever rendered as links. A bare domain gets https://. */
-export function safeWebsiteHref(url: string): string | null {
-  const raw = url.trim();
-  if (!raw) return null;
-  try {
-    const parsed = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null;
-  } catch {
-    return null;
-  }
-}
+export const safeWebsiteHref = safeWebsiteUrl;
 
 export function websiteLabel(url: string): string {
   const href = safeWebsiteHref(url);

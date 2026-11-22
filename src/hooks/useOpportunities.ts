@@ -8,6 +8,7 @@ export function useOpportunities(ui: UiState) {
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
 
+  const [opportunitiesError, setOpportunitiesError] = useState(false);
   const [detail, setDetail] = useState<Opportunity | null>(null);
 
   const loadOpportunities = async () => {
@@ -18,8 +19,11 @@ export function useOpportunities(ui: UiState) {
         source: sourceFilter,
       });
       setOpportunities(data ?? []);
+      setOpportunitiesError(false);
     } catch {
-      // The server banner already says when it cannot be reached; keep what is on screen.
+      // Never keep stale rows after a failed load: show the error state instead.
+      setOpportunities([]);
+      setOpportunitiesError(true);
     }
   };
 
@@ -31,8 +35,6 @@ export function useOpportunities(ui: UiState) {
       location: payload.location || 'Uttar Pradesh, India',
       fit: payload.fit || 'High',
       type: payload.type || 'Individual developer',
-      hasVendorDocRequirements: !!payload.docs,
-      vendorRequirementNotes: payload.vendorRequirementNotes,
       sourceUrl: payload.sourceUrl,
       evidenceSnippet: payload.evidenceSnippet,
     });
@@ -77,7 +79,7 @@ export function useOpportunities(ui: UiState) {
   }), [opportunities, query, statusFilter, sourceFilter]);
 
   return {
-    opportunities, setOpportunities, detail, setDetail, loadOpportunities,
+    opportunities, opportunitiesError, setOpportunities, detail, setDetail, loadOpportunities,
     handleCreateOpportunity, handleStatusChange, handleArchive, handleDeleteOpportunity,
     filteredOpportunities,
   };

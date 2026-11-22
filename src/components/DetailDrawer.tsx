@@ -1,4 +1,5 @@
-import { Building2, ExternalLink, Globe2, MapPin, Send, ShieldAlert, Trash2, X } from 'lucide-react';
+import { safeHttpUrl } from '../utils/safeUrl';
+import { Building2, ExternalLink, Globe2, MapPin, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Pill } from './ui/Primitives';
 import { Contact, Opportunity } from '../types';
@@ -28,7 +29,7 @@ export function DetailDrawer({
   const [reason, setReason] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const statuses = ['New', 'Needs review', 'Qualified', 'Contacted', 'Readiness hold', 'Interested', 'Archived'];
+  const statuses = ['New', 'Needs review', 'Qualified', 'Contacted', 'Interested', 'Archived'];
 
   return (
     <div className="drawer-backdrop" onClick={onClose}>
@@ -128,16 +129,20 @@ export function DetailDrawer({
           {/* Sourcing Link Card */}
           {item.sourceUrl && (
             <div className="drawer-evidence-card" style={{ borderLeftColor: '#0ea5e9' }}>
-              <strong>Verified Sourcing URL</strong>
-              <a
-                href={item.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-link"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', marginTop: '4px' }}
-              >
-                <Globe2 size={13} /> {item.sourceUrl} <ExternalLink size={12} />
-              </a>
+              <strong>Source URL</strong>
+              {safeHttpUrl(item.sourceUrl) ? (
+                <a
+                  href={safeHttpUrl(item.sourceUrl)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-link"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', marginTop: '4px' }}
+                >
+                  <Globe2 size={13} /> {item.sourceUrl} <ExternalLink size={12} />
+                </a>
+              ) : (
+                <span style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{item.sourceUrl}</span>
+              )}
             </div>
           )}
 
@@ -146,19 +151,6 @@ export function DetailDrawer({
             <div className="drawer-evidence-card">
               <strong>Captured Source Evidence</strong>
               <p>"{item.evidenceSnippet}"</p>
-            </div>
-          )}
-
-          {/* Vendor Readiness Callout Banner */}
-          {item.docs && (
-            <div className="drawer-readiness-banner">
-              <ShieldAlert size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <strong style={{ display: 'block', fontSize: '12px', marginBottom: '2px' }}>Vendor Document Requirement Detected</strong>
-                <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.5 }}>
-                  {item.vendorRequirementNotes || 'Review supplier compliance documents and GST/MSME verification packs in Vendor Readiness.'}
-                </p>
-              </div>
             </div>
           )}
 
@@ -200,9 +192,6 @@ export function DetailDrawer({
         <div className="drawer-footer">
           <Button variant="danger" icon={Trash2} onClick={() => onArchive(item)}>Delete</Button>
           <Button onClick={onClose}>Close</Button>
-          <Button variant="primary" onClick={() => { onNotify('Outreach draft created from opportunity'); onClose(); }}>
-            <Send size={14} style={{ marginRight: '6px' }} /> Prepare outreach draft
-          </Button>
         </div>
       </div>
     </div>

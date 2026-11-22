@@ -23,7 +23,7 @@ export function AgentRows({ settings, s }: Props) {
           const errId = `${nameId}-err`;
           const lockId = `as-lock-${i}`;
           const error = s.errors[`agents[${i}].name`];
-          const lock = agentLockReason(info, draft.agents);
+          const lock = agentLockReason(info);
           return (
             <li className="as-row" key={info.id}>
               <AgentAvatar id={info.id} name={row.name || info.defaultName} />

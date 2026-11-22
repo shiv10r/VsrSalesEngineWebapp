@@ -17,10 +17,7 @@ export function useUiState() {
 
   const [settingsTab, setSettingsTab] = useState('General');
   const [dark, setDark] = useState(false);
-
-  const [activityTab, setActivityTab] = useState<'audit' | 'metrics' | 'failures'>('audit');
-
-  const [outreachTab, setOutreachTab] = useState<'queue' | 'sink' | 'suppression'>('queue');
+  const [signInNotice, setSignInNotice] = useState('');
 
   const notify = (msg: string) => {
     setToast(msg);
@@ -36,7 +33,7 @@ export function useUiState() {
     setStatusFilter, sourceFilter, setSourceFilter, activeTab, setActiveTab, modal, setModal,
     toast, setToast, mobileNav, setMobileNav, sidebarCollapsed, setSidebarCollapsed,
     settingsTab, setSettingsTab, dark,
-    setDark, activityTab, setActivityTab, outreachTab, setOutreachTab, notify, go,
+    setDark, notify, go, signInNotice, setSignInNotice,
   };
 }
 

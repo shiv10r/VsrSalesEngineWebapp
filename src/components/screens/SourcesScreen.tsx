@@ -4,7 +4,7 @@ import type { AppCtx } from '../../appContext';
 
 export function SourcesScreen({ ctx }: { ctx: AppCtx }) {
   const {
-    sources, pageHeading, loadSourcesAndProfiles, notify, handleUpdateSourceStatus,
+    sources, pageHeading, loadSourcesAndProfiles, notify, handleUpdateSourceStatus, sourcesError,
   } = ctx;
 
   const activeSources = sources;
@@ -16,7 +16,8 @@ export function SourcesScreen({ ctx }: { ctx: AppCtx }) {
         <Info size={15} />
         <span>Policy rule: LinkedIn handoff is restricted by design. Automated scraping and unsolicited platform DMs are prohibited.</span>
       </div>
-      {activeSources.length === 0 && (
+      {sourcesError && <p className="muted-cell" role="alert">Could not load the sources from the server. Press Refresh registry to try again.</p>}
+      {!sourcesError && activeSources.length === 0 && (
         <p className="muted-cell">No sources came back from the server. Press Refresh registry; if this stays empty the server cannot be reached.</p>
       )}
       <div className="sources-grid">

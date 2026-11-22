@@ -25,7 +25,7 @@ export function AgentsScreen({ ctx }: { ctx: AppCtx }) {
 
   const heading = pageHeading(
     'Agents',
-    'A team of specialist agents hunts, filters, scores and drafts for you. Watch their reasoning live.',
+    'A team of specialist agents finds, filters, de-duplicates, scores and finds contacts for you. Watch their reasoning live.',
     null,
     'AUTOMATION',
   );

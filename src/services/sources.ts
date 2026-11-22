@@ -1,18 +1,10 @@
-import { API_BASE_URL, ApiCore } from './http';
+import { API_BASE_URL, ApiCore, fetchList } from './http';
 import { DiscoveryRunResult, SearchProfile, SourceDefinition } from '../types';
 
 export function createSourcesApi(core: ApiCore) {
   const methods = {
     async getSources(): Promise<SourceDefinition[]> {
-      try {
-        const res = await fetch(`${API_BASE_URL}/sources`, { headers: core.getHeaders() });
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch {
-        // Fallback
-      }
-      return [];
+      return fetchList(core, '/sources', 'sources');
     },
 
     async updateSourceStatus(id: string, policyStatus: string, reason?: string): Promise<SourceDefinition | null> {
@@ -32,15 +24,7 @@ export function createSourcesApi(core: ApiCore) {
     },
 
     async getSearchProfiles(): Promise<SearchProfile[]> {
-      try {
-        const res = await fetch(`${API_BASE_URL}/searchprofiles`, { headers: core.getHeaders() });
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch {
-        // Fallback
-      }
-      return [];
+      return fetchList(core, '/searchprofiles', 'search profiles');
     },
 
     async createSearchProfile(payload: Partial<SearchProfile>): Promise<SearchProfile | null> {

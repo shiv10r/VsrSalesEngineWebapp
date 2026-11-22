@@ -12,17 +12,15 @@ const m = await loadModule(`
   import { ServerStatus } from './src/components/layout/ServerStatus.tsx';
   import { startHealthPolling } from './src/utils/healthPoller.ts';
   import { SourcesScreen } from './src/components/screens/SourcesScreen.tsx';
-  import { ReportsScreen } from './src/components/screens/ReportsScreen.tsx';
   import { ActivityLogScreen } from './src/components/screens/ActivityLogScreen.tsx';
   import { useOpportunities } from './src/hooks/useOpportunities.ts';
   import { useContacts } from './src/hooks/useContacts.ts';
-  import { useCampaigns } from './src/hooks/useCampaigns.ts';
   export const render = (type, props) => renderToStaticMarkup(h(type, props));
-  export { ServerStatus, startHealthPolling, SourcesScreen, ReportsScreen, ActivityLogScreen };
+  export { ServerStatus, startHealthPolling, SourcesScreen, ActivityLogScreen };
   const ui = { query: '', statusFilter: 'All statuses', sourceFilter: 'All sources', notify() {}, userEmail: '' };
   export function Probe() {
     return h('pre', null, JSON.stringify({
-      o: useOpportunities(ui).opportunities, c: useContacts(ui).contacts, k: useCampaigns(ui).campaigns,
+      o: useOpportunities(ui).opportunities, c: useContacts(ui).contacts,
     }));
   }
 `);
@@ -80,7 +78,7 @@ test('real server status banner', async (t) => {
 test('no invented data on screen', async (t) => {
   await t.test('hooks start empty, not with demo rows', () => {
     const html = m.render(m.Probe, {});
-    assert.match(html, /\{&quot;o&quot;:\[\],&quot;c&quot;:\[\],&quot;k&quot;:\[\]\}/);
+    assert.match(html, /\{&quot;o&quot;:\[\],&quot;c&quot;:\[\]\}/);
   });
 
   await t.test('sources screen shows an honest message instead of made-up sources', () => {
@@ -89,25 +87,11 @@ test('no invented data on screen', async (t) => {
     assert.doesNotMatch(html, /Company careers|Public procurement|Approved feed/);
   });
 
-  await t.test('reports show zeros, not 100% or 1 source, with no data', () => {
-    const html = m.render(m.ReportsScreen, { ctx: { pageHeading: heading, kpi, opportunities: [], outreachRows: [] } });
-    assert.match(html, /Opportunities found:0/);
-    assert.match(html, /Replies:0/);
-    assert.match(html, /Sources with results:0/);
-    assert.doesNotMatch(html, /100%/);
-  });
-
-  await t.test('activity log shows empty states, not fake failures or metrics', () => {
-    const ctx = {
-      reliabilityMetrics: null, failedRuns: [], pageHeading: heading, go() {}, loadReliabilityData() {}, notify() {},
-      activityTab: 'failures', setActivityTab() {}, isRetryingId: null, handleRetryFailure() {},
-    };
-    const failures = m.render(m.ActivityLogScreen, { ctx });
-    assert.match(failures, /No failed runs recorded/);
-    assert.doesNotMatch(failures, /EXEC-00|Simulate|blocked-client/);
-    const metrics = m.render(m.ActivityLogScreen, { ctx: { ...ctx, activityTab: 'metrics' } });
-    assert.match(metrics, /No health metrics from the server yet/);
-    assert.doesNotMatch(metrics, /Company careers/);
+  await t.test('activity log shows an honest empty state, not fake failures or metrics', () => {
+    const ctx = { pageHeading: heading, go() {}, agents: { agentRuns: [], agentsLoadState: 'ready' } };
+    const html = m.render(m.ActivityLogScreen, { ctx });
+    assert.match(html, /No runs recorded yet/);
+    assert.doesNotMatch(html, /EXEC-00|Simulate|blocked-client|Dead-letter/);
   });
 });
 

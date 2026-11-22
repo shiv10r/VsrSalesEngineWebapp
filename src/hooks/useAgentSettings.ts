@@ -50,7 +50,6 @@ export function useAgentSettings({ open, guest, notify, onSaved }: Options) {
     edit(d => ({ ...d, agents: d.agents.map((a, k) => (k === i ? { ...a, name } : a)) }));
   const setAgentEnabled = (i: number, enabled: boolean) =>
     edit(d => ({ ...d, agents: d.agents.map((a, k) => (k === i ? { ...a, enabled } : a)) }));
-  const setThreshold = (draftThreshold: number) => edit(d => ({ ...d, draftThreshold }));
   const setKeywords = (kind: 'target' | 'excluded', list: string[]) =>
     edit(d => ({ ...d, keywords: { ...d.keywords, [kind]: list } }));
   const setShift = (i: number, patch: ShiftPatch) =>
@@ -89,7 +88,7 @@ export function useAgentSettings({ open, guest, notify, onSaved }: Options) {
 
   return {
     settings, draft, loadState, saving, errors, saveMessage, dirty, canSave, readOnly: guest,
-    retry: load, save, discard, setAgentName, setAgentEnabled, setThreshold, setKeywords, setShift,
+    retry: load, save, discard, setAgentName, setAgentEnabled, setKeywords, setShift,
   };
 }
 

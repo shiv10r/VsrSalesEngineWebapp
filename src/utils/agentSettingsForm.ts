@@ -8,7 +8,6 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export function toDraft(s: AgentSettings): SettingsDraft {
   return {
     agents: s.agents.map(a => ({ id: a.id, name: a.name, enabled: a.enabled })),
-    draftThreshold: s.draftThreshold,
     keywords: { target: [...s.keywords.target], excluded: [...s.keywords.excluded] },
     shifts: s.shifts.map(x => ({
       scheduleId: x.scheduleId,
@@ -37,12 +36,8 @@ export function isDirty(original: AgentSettings | null, draft: SettingsDraft | n
 /** Why an agent's switch cannot be changed, or null when it can. */
 export function agentLockReason(
   agent: { id: string; required: boolean },
-  draftAgents: SettingsDraft['agents'],
 ): string | null {
   if (agent.required) return 'Required: the relay cannot run without this agent.';
-  if (agent.id === 'compliance' && draftAgents.some(a => a.id === 'drafter' && a.enabled)) {
-    return 'Needed while the Drafter is on, so every draft is checked.';
-  }
   return null;
 }
 
@@ -60,9 +55,6 @@ export function validateDraft(draft: SettingsDraft): FieldError[] {
     seen.set(name.toLowerCase(), i);
   });
 
-  if (!Number.isInteger(draft.draftThreshold) || draft.draftThreshold < 0 || draft.draftThreshold > 100) {
-    errors.push({ field: 'draftThreshold', message: 'Enter a whole number from 0 to 100.' });
-  }
 
   draft.shifts.forEach((x, i) => {
     if (!Number.isInteger(x.intervalHours) || x.intervalHours < 1 || x.intervalHours > 24) {

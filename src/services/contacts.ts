@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiCore } from './http';
+import { API_BASE_URL, ApiCore, fetchList } from './http';
 import { Contact } from '../types';
 import { toRelation } from '../utils/linkedinHandoff';
 
@@ -26,26 +26,16 @@ export function createContactsApi(core: ApiCore) {
 
   const methods = {
     async getContacts(params?: { query?: string; company?: string; status?: string; qualificationStatus?: string }): Promise<Contact[]> {
-      try {
-        const searchParams = new URLSearchParams();
-        if (params?.query) searchParams.append('query', params.query);
-        if (params?.company) searchParams.append('company', params.company);
-        if (params?.status && params.status !== 'All statuses') searchParams.append('status', params.status);
-        if (params?.qualificationStatus) searchParams.append('qualificationStatus', params.qualificationStatus);
-        searchParams.append('pageSize', '100');
+      const searchParams = new URLSearchParams();
+      if (params?.query) searchParams.append('query', params.query);
+      if (params?.company) searchParams.append('company', params.company);
+      if (params?.status && params.status !== 'All statuses') searchParams.append('status', params.status);
+      if (params?.qualificationStatus) searchParams.append('qualificationStatus', params.qualificationStatus);
+      searchParams.append('pageSize', '100');
 
-        const res = await fetch(`${API_BASE_URL}/contacts?${searchParams.toString()}`, {
-          headers: core.getHeaders(),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const items = data.items ? data.items : (Array.isArray(data) ? data : []);
-          return items.map((c: any) => mapContact(c));
-        }
-      } catch {
-        // Fallback
-      }
-      return [];
+      const data = await fetchList(core, `/contacts?${searchParams.toString()}`, 'contacts');
+      const items = data.items ? data.items : (Array.isArray(data) ? data : []);
+      return items.map((c: any) => mapContact(c));
     },
 
     async createContact(payload: Partial<Contact>): Promise<Contact | null> {

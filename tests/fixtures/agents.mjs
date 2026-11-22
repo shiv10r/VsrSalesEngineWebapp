@@ -10,7 +10,7 @@ export const agents = [
 export const lastRun = {
   id: 'RUN-214', scheduleId: 'SCHED-004', shiftName: 'Night shift agent', trigger: 'ExternalTimer',
   startedAtUtc: '2026-11-21T18:27:00Z', finishedAtUtc: null, status: 'running', summary: null,
-  newLeads: 7, duplicates: 12, rejected: 5, draftsReady: 3,
+  newLeads: 7, duplicates: 12, rejected: 5,
 };
 
 export const overview = { agents, lastRun, nextRunAtUtc: '2026-11-21T20:27:00Z', runInProgress: true };
@@ -18,7 +18,7 @@ export const overview = { agents, lastRun, nextRunAtUtc: '2026-11-21T20:27:00Z',
 export const runs = [
   lastRun,
   { ...lastRun, id: 'RUN-213', shiftName: 'Day shift agent', status: 'completed', finishedAtUtc: '2026-11-21T16:33:20Z', startedAtUtc: '2026-11-21T16:27:00Z', summary: '9 new leads, best score 91', trigger: 'AutonomousWorker' },
-  { ...lastRun, id: 'RUN-212', shiftName: 'Morning shift agent', status: 'skipped', finishedAtUtc: '2026-11-21T14:27:01Z', startedAtUtc: '2026-11-21T14:27:00Z', summary: 'Outside shift window', newLeads: 0, duplicates: 0, rejected: 0, draftsReady: 0 },
+  { ...lastRun, id: 'RUN-212', shiftName: 'Morning shift agent', status: 'skipped', finishedAtUtc: '2026-11-21T14:27:01Z', startedAtUtc: '2026-11-21T14:27:00Z', summary: 'Outside shift window', newLeads: 0, duplicates: 0, rejected: 0 },
 ];
 
 const lead = {
