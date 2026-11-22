@@ -8,9 +8,7 @@ export function useOutreach(ui: UiState, people: ContactsState) {
   const { notify } = ui;
   const { contacts } = people;
 
-  const [outreachRows, setOutreachRows] = useState<OutreachRow[]>([
-    {company:'Northstar Digital',contact:'Maya Patel',subject:'Engineering support for your .NET team',channel:'Email',status:'Draft ready',updated:'Today, 10:31 AM'},
-  ]);
+  const [outreachRows, setOutreachRows] = useState<OutreachRow[]>([]);
 
   const [sinkMessages, setSinkMessages] = useState<SinkMessage[]>([]);
   const [suppressions, setSuppressions] = useState<SuppressionRecord[]>([]);
@@ -32,9 +30,13 @@ export function useOutreach(ui: UiState, people: ContactsState) {
 
   const handleToggleKillSwitch = async () => {
     const next = !killSwitchEngaged;
-    const res = await api.toggleKillSwitch(next);
-    setKillSwitchEngaged(res.isEngaged);
-    notify(res.message);
+    try {
+      const res = await api.toggleKillSwitch(next);
+      setKillSwitchEngaged(res.isEngaged);
+      notify(res.message);
+    } catch (err: any) {
+      notify(err.message);
+    }
   };
 
   const handleRunSmokeDrill = async () => {
@@ -42,9 +44,9 @@ export function useOutreach(ui: UiState, people: ContactsState) {
     try {
       const res = await api.getOperationalSmokeDrill();
       setSmokeDrillResult(res);
-      notify('Operational smoke drill: All systems verified PASS');
+      notify(`Operational smoke drill: ${res.status}`);
     } catch {
-      notify('Smoke drill completed with local simulation');
+      notify('Smoke drill failed: the server could not be reached.');
     } finally {
       setIsRunningSmokeDrill(false);
     }
@@ -72,7 +74,11 @@ export function useOutreach(ui: UiState, people: ContactsState) {
     setIsSendingToSink(row.company);
     try {
       const contactObj = contacts.find(c => c.name.toLowerCase() === row.contact.toLowerCase() || c.company.toLowerCase() === row.company.toLowerCase());
-      const recipientEmail = contactObj?.email || `${row.contact.toLowerCase().replace(/\s+/g, '.')}@${row.company.toLowerCase().replace(/\s+/g, '')}.example`;
+      const recipientEmail = contactObj?.email;
+      if (!recipientEmail) {
+        notify(`No email address on file for ${row.contact || row.company}, so nothing was sent.`);
+        return;
+      }
 
       const result = await api.sendOutreach({
         recipientEmail,
@@ -93,7 +99,7 @@ export function useOutreach(ui: UiState, people: ContactsState) {
           notify(`Dispatched: ${result.status}`);
         }
       } else {
-        notify(`Simulated sink send completed for ${row.company}`);
+        notify('The server did not confirm the send, so nothing was sent.');
       }
     } finally {
       setIsSendingToSink(null);

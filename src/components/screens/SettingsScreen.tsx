@@ -94,9 +94,6 @@ export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
                 </div>
               )}
 
-              <SettingRow title="Outreach mode" desc="Current runtime routing mode.">
-                <Pill type="neutral">Test (Sandbox Sink)</Pill>
-              </SettingRow>
               <SettingRow title="Default sink recipient" desc="Safe destination for intercepted drafts.">
                 <code>dev-sink@vsrsalesengine.local</code>
               </SettingRow>
@@ -138,7 +135,6 @@ export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
               <div className="settings-title"><h2>About VSR Sales Engine</h2></div>
               <SettingRow title="Frontend stack" desc="UI framework."><strong>React + TypeScript (Vite)</strong></SettingRow>
               <SettingRow title="Backend API" desc="Web API framework."><strong>.NET 10 LTS ASP.NET Core</strong></SettingRow>
-              <SettingRow title="Database" desc="Target database."><strong>Supabase PostgreSQL</strong></SettingRow>
             </>
           )}
         </section>

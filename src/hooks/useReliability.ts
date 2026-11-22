@@ -41,21 +41,9 @@ export function useReliability(ui: UiState) {
     }
   };
 
-  const handleSimulateFailure = async (type: string) => {
-    try {
-      const sim = await api.simulateFailure(type, 'Discovery', `SIM-${Date.now()}`);
-      if (sim) {
-        notify(`Simulated ${type} failure injected (${sim.status})`);
-        await loadReliabilityData();
-      }
-    } catch {
-      notify('Simulation failed');
-    }
-  };
-
   return {
     reliabilityMetrics, setReliabilityMetrics, failedRuns, setFailedRuns, isRetryingId,
-    setIsRetryingId, loadReliabilityData, handleRetryFailure, handleSimulateFailure,
+    setIsRetryingId, loadReliabilityData, handleRetryFailure,
   };
 }
 

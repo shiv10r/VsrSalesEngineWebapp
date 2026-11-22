@@ -1,5 +1,5 @@
 import {
-  ArrowUpRight, ChevronRight, ExternalLink, FileCheck2, Filter, MoreHorizontal, Search,
+  ChevronRight, ExternalLink, FileCheck2, Filter, Search,
   SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import { Button, EmptyHint, Pill } from './ui/Primitives';
@@ -23,19 +23,15 @@ export function makePageHelpers(ctx: BaseCtx) {
     );
   }
 
-  function kpi(title: string, value: string, change: string, Icon: any, tone: string = 'blue', note: string = 'vs. previous 7 days') {
+  function kpi(title: string, value: string, Icon: any, tone: string = 'blue', foot?: string) {
     return (
       <div className="kpi-card" key={title}>
         <div className={`kpi-icon ${tone}`}><Icon size={18} /></div>
         <div className="kpi-content">
           <div className="kpi-title">{title}</div>
           <div className="kpi-value">{value}</div>
-          <div className="kpi-foot">
-            <span className={change.startsWith('+') ? 'positive' : 'muted'}>{change.startsWith('+') && <ArrowUpRight size={13} />} {change}</span>
-            <span>{note}</span>
-          </div>
+          {foot && <div className="kpi-foot"><span>{foot}</span></div>}
         </div>
-        <MoreHorizontal size={17} className="kpi-more" />
       </div>
     );
   }

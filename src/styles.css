@@ -550,3 +550,9 @@
   color: #ffffff !important;
 }
 
+.server-status{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4)}
+.server-status.up{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.3)}
+.server-status.up b{color:#059669}
+.server-status.down b{color:#b45309}
+.footer-dot.up{background-color:#10b981}
+.footer-dot.down{background-color:#f59e0b}

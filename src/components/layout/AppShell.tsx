@@ -1,5 +1,5 @@
 import {
-  Activity, Bell, CheckCircle2, ChevronDown, ChevronRight, Menu, Moon, Search, Sun,
+  Bell, CheckCircle2, ChevronDown, ChevronRight, Menu, Moon, Search, Sun,
 } from 'lucide-react';
 import { ComplianceGateModal } from '../ComplianceGateModal';
 import { DetailDrawer } from '../DetailDrawer';
@@ -7,6 +7,8 @@ import { DraftComposerModal } from '../DraftComposerModal';
 import { Modal } from '../Modal';
 import { PageRouter } from '../screens/PageRouter';
 import { Sidebar } from './Sidebar';
+import { ServerFootDot, ServerStatus } from './ServerStatus';
+import { useServerHealth } from '../../hooks/useServerHealth';
 import { api } from '../../services/api';
 import type { AppCtx } from '../../appContext';
 
@@ -18,6 +20,8 @@ export function AppShell({ ctx }: { ctx: AppCtx }) {
     handleCreateSchedule, detail, setDetail, handleStatusChange, handleArchive,
     selectedGateCampaign, setSelectedGateCampaign, toast, handleMarkLinkedInRequested,
   } = ctx;
+
+  const serverOk = useServerHealth();
 
   return (
     <div className={`app-shell ${dark ? 'dark' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -67,14 +71,11 @@ export function AppShell({ ctx }: { ctx: AppCtx }) {
             </button>
           </div>
         </header>
-        <div className="dev-banner" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-          <span><Activity size={14} style={{ color: '#10b981' }} /> <b style={{ color: '#10b981' }}>LIVE ENGINE CONNECTED</b> <span>.NET 10 LTS Web API • Live Ingestion Pipeline • Gemini 2.5 Flash active</span></span>
-          <button onClick={() => go('Settings')}>Environment controls <ChevronRight size={14} /></button>
-        </div>
+        <ServerStatus ok={serverOk} onSettings={() => go('Settings')} />
         <div className="page-content"><PageRouter ctx={ctx} /></div>
         <footer className="footer">
           <span>© 2026 VSR Sales Engine</span>
-          <span><i className="footer-dot" style={{ backgroundColor: '#10b981' }} /> Live Workspace Connected <span className="footer-sep">·</span> API v0.1.0</span>
+          <ServerFootDot ok={serverOk} />
         </footer>
       </main>
       {modal && modal.type === 'compose' ? (
@@ -98,8 +99,14 @@ export function AppShell({ ctx }: { ctx: AppCtx }) {
       ) : modal && (
         <Modal modal={modal} onClose={() => setModal(null)} onNotify={notify} onCreate={(m: any) => {
           if (m.type === 'campaign') {
-            setCampaigns(prev => [{ name: m.name || 'New sales campaign', audience: m.audience || 'Custom audience', sent: 0, replies: 0, status: 'Draft', next: 'Not scheduled' }, ...prev]);
-            notify('Campaign draft created');
+            api.createCampaign({ name: m.name, audience: m.audience }).then(created => {
+              if (created) {
+                setCampaigns(prev => [created, ...prev]);
+                notify('Campaign draft created');
+              } else {
+                notify('Could not create the campaign: the server did not answer.');
+              }
+            });
           } else if (m.type === 'contact') {
             handleCreateContact(m);
           } else if (m.type === 'opportunity') {

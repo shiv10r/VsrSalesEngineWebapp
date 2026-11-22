@@ -13,7 +13,7 @@ export function OpportunityFields({ form }: { form: ModalForm }) {
       <div className="form-section-divider">Role & Opportunity Identity</div>
       <div className="form-group">
         <label className="form-label"><span>Company Name <span className="form-label-required">*</span></span></label>
-        <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Microsoft / Northstar Digital" />
+        <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="Company name" />
       </div>
       <div className="form-group">
         <label className="form-label"><span>Role / Requirement Title <span className="form-label-required">*</span></span></label>
@@ -24,11 +24,10 @@ export function OpportunityFields({ form }: { form: ModalForm }) {
         <div className="form-group">
           <label className="form-label">Source Channel</label>
           <select className="form-select" value={source} onChange={e => setSource(e.target.value)}>
-            <option value="Company careers">Company careers</option>
-            <option value="Public job board">Public job board</option>
-            <option value="Direct research">Direct research</option>
-            <option value="Public procurement">Public procurement</option>
-            <option value="Approved feed">Approved feed</option>
+            <option value="Manually added">Manually added</option>
+            <option value="Referral">Referral</option>
+            <option value="Company website">Company website</option>
+            <option value="Other">Other</option>
           </select>
         </div>
         <div className="form-group">
@@ -57,7 +56,7 @@ export function OpportunityFields({ form }: { form: ModalForm }) {
       <div className="form-section-divider">Verification & Sourcing</div>
       <div className="form-group">
         <label className="form-label">Source URL</label>
-        <input className="form-input" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://careers.example.com/job" />
+        <input className="form-input" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://" />
       </div>
       <div className="form-group">
         <label className="form-label">Captured Evidence Snippet</label>

@@ -50,9 +50,9 @@ export function OutreachScreen({ ctx }: { ctx: AppCtx }) {
       {outreachTab === 'queue' && (
         <>
           <div className="kpi-grid three">
-            {kpi('Drafts ready', String(outreachRows.filter(r => r.status === 'Draft ready').length), 'awaiting review', FileText, 'blue', 'safe mode')}
-            {kpi('Replies to review', String(outreachRows.filter(r => r.status === 'Replied').length), 'processed', MessageSquareText, 'green', 'real-time')}
-            {kpi('Follow-ups due', String(outreachRows.filter(r => r.status === 'Follow-up due').length), 'scheduled', CalendarClock, 'amber', 'pipeline rules')}
+            {kpi('Drafts ready', String(outreachRows.filter(r => r.status === 'Draft ready').length), FileText, 'blue', 'awaiting your review')}
+            {kpi('Replies to review', String(outreachRows.filter(r => r.status === 'Replied').length), MessageSquareText, 'green')}
+            {kpi('Follow-ups due', String(outreachRows.filter(r => r.status === 'Follow-up due').length), CalendarClock, 'amber')}
           </div>
           <section className="panel table-panel">
             <div className="panel-heading"><div><h2>Outreach queue</h2><p>Track message status and run sandbox test dispatches.</p></div></div>
@@ -60,6 +60,9 @@ export function OutreachScreen({ ctx }: { ctx: AppCtx }) {
               <table>
                 <thead><tr><th>COMPANY / CONTACT</th><th>MESSAGE</th><th>CHANNEL</th><th>STATUS</th><th>LAST UPDATED</th><th>ACTIONS</th></tr></thead>
                 <tbody>
+                  {outreachRows.length === 0 && (
+                    <tr><td colSpan={6} className="muted-cell" style={{ textAlign: 'center', padding: '24px' }}>No outreach drafts yet. Drafts you approve will appear here.</td></tr>
+                  )}
                   {outreachRows.map(r => (
                     <tr key={r.company + r.subject}>
                       <td><div className="company-cell"><div className="company-logo logo-2">{r.company.slice(0, 2)}</div><div><strong>{r.company}</strong><small>{r.contact}</small></div></div></td>
