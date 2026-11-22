@@ -20,18 +20,26 @@ export function LocalLeadsError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function LocalLeadsEmpty({ filtered, canWrite, onImport, onClear }: {
+export const NO_MATCH_MESSAGE =
+  'No saved leads match. This page searches leads you saved. Use Find on Google Maps to search live, or import a CSV.';
+
+export function LocalLeadsEmpty({ filtered, canWrite, onImport, onClear, onFindOnMaps }: {
   filtered: boolean;
   canWrite: boolean;
   onImport: () => void;
   onClear: () => void;
+  /** Switches to the Google Maps panel, prefilled with the current search text. */
+  onFindOnMaps?: () => void;
 }) {
   if (filtered) {
     return (
       <div className="ag-state">
         <h3>No leads match these filters</h3>
-        <p>Try a different district or category, or clear the filters.</p>
-        <button type="button" className="btn secondary" onClick={onClear}>Clear filters</button>
+        <p>{NO_MATCH_MESSAGE}</p>
+        <div className="ms-fallbacks">
+          {onFindOnMaps && <button type="button" className="btn primary" onClick={onFindOnMaps}>Find on Google Maps</button>}
+          <button type="button" className="btn secondary" onClick={onClear}>Clear filters</button>
+        </div>
       </div>
     );
   }

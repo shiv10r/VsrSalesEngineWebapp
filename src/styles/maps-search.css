@@ -1,0 +1,42 @@
+/* Find on Google Maps panel. Prefix: ms-. Reuses ll- and ag- building blocks and the app colour tokens. */
+.ms-tabs{display:flex;gap:6px;margin:0 0 12px;border-bottom:1px solid var(--line)}
+.ms-tab{border:0;background:none;padding:8px 12px;font-size:13px;font-weight:600;color:var(--muted);
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.ms-tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--blue)}
+.ms-tab:focus-visible{outline:2px solid var(--blue-2);outline-offset:2px}
+
+.ms-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:14px}
+.ms-form .ll-field{flex:0 1 190px}
+.ms-form .ms-grow{flex:1 1 220px}
+.ms-form .ms-max{flex:0 0 90px}
+.ms-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.ms-btn[disabled]{cursor:not-allowed}
+.ms-reason,.ms-note{margin:0 14px 10px}
+.ms-alert{margin:0 14px 14px}
+.ms-skel{height:120px;margin:14px}
+.ms-setup code{background:var(--grid);padding:1px 5px;border-radius:4px}
+.ms-fallbacks{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}
+
+.ms-results{list-style:none;margin:0;padding:0 14px 14px;display:grid;gap:10px}
+.ms-card{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel)}
+.ms-card-main{flex:1 1 320px;min-width:0}
+.ms-card-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ms-addr{max-width:none}
+.ms-facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 0;font-size:12px}
+.ms-facts dt{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.ms-facts dd{margin:0}
+.ms-card-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;justify-content:center}
+
+.ms-live{display:flex;flex-direction:column;gap:2px;margin-top:6px;padding:6px 8px;border-radius:6px;font-size:11.5px;
+  background:color-mix(in srgb,var(--blue) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--blue) 25%,var(--line))}
+.ms-live-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--blue)}
+.ms-live-err{color:#b42323;background:color-mix(in srgb,#d64545 10%,var(--panel))}
+.ms-live .ll-clear{align-self:flex-start}
+.ms-live-btn{border:1px solid var(--line);background:var(--panel);color:var(--blue);border-radius:6px;padding:3px 8px;
+  font-size:11px;font-weight:600;white-space:nowrap}
+
+@media (max-width:560px){
+  .ms-form .ll-field,.ms-form .ms-max{flex:1 1 100%}
+  .ms-card-actions{flex-direction:row;flex-wrap:wrap}
+}

@@ -92,7 +92,7 @@ test('Local Leads page', async (t) => {
     assert.match(html, /<h1>Local Leads<\/h1>/);
     assert.match(html, /Import CSV/);
     assert.match(html, /Add lead/);
-    assert.match(html, /Sources are CSV imports and manual entries\. Categories are assigned by simple keyword rules, not AI\./);
+    assert.match(html, /Sources are CSV imports, manual entries and Google Maps results you saved\. Categories are assigned by simple keyword rules, not AI\./);
     assert.doesNotMatch(html, /Guests can view local leads/);
   });
 
