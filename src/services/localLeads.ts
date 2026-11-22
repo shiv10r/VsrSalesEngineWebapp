@@ -3,6 +3,9 @@ import type {
   ImportResult, ImportRow, LocalLead, LocalLeadOptions, LocalLeadPage, LocalLeadPatch,
   LocalLeadQuery, LocalLeadSummary, NewLocalLead, WriteResult,
 } from '../types/localLeads';
+import type {
+  DiscoverRequest, DiscoverResponse, LiveDetails, MapsResult, PlacesStatus, SavePlaceBody, SavePlaceResult,
+} from '../types/mapsSearch';
 
 export const DEFAULT_PAGE_SIZE = 25;
 
@@ -54,6 +57,31 @@ async function send<T>(core: ApiCore, method: string, path: string, body?: unkno
   }
 }
 
+async function messageOf(res: Response, fallback: string): Promise<string> {
+  const data = await res.json().catch(() => ({}));
+  return typeof data?.message === 'string' && data.message ? data.message : fallback;
+}
+
+/** Google Maps calls never throw. 503 = no API key on the server, 429 = daily cap or Google quota, 502 = Google trouble. */
+async function sendMaps<T>(core: ApiCore, method: string, path: string, body?: unknown): Promise<MapsResult<T>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: core.getHeaders(),
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    if (res.ok) return { ok: true, value: (await res.json()) as T };
+    if (res.status === 503) return { ok: false, reason: 'notConfigured', message: await messageOf(res, 'Google Maps search is not set up.') };
+    if (res.status === 403) return { ok: false, reason: 'forbidden', message: "Guests can't search Google Maps or save leads. Sign in to do that." };
+    if (res.status === 429) return { ok: false, reason: 'quota', message: await messageOf(res, 'The daily Google Maps search limit is reached.') };
+    if (res.status === 400) return { ok: false, reason: 'validation', message: await messageOf(res, 'The server rejected that search.') };
+    if (res.status === 404) return { ok: false, reason: 'notFound', message: await messageOf(res, 'Not found.') };
+    return { ok: false, reason: 'error', message: await messageOf(res, `The server responded ${res.status}.`) };
+  } catch {
+    return { ok: false, reason: 'unreachable', message: 'Could not reach the server.' };
+  }
+}
+
 export function createLocalLeadsApi(core: ApiCore) {
   return {
     getLocalLeadOptions: (): Promise<LocalLeadOptions> => getJson(core, '/local-leads/options'),
@@ -69,5 +97,13 @@ export function createLocalLeadsApi(core: ApiCore) {
       send<undefined>(core, 'DELETE', `/local-leads/${encodeURIComponent(id)}`),
     importLocalLeads: (sourceLabel: string, rows: ImportRow[]): Promise<WriteResult<ImportResult>> =>
       send<ImportResult>(core, 'POST', '/local-leads/import', { sourceLabel, rows }),
+
+    getDiscoverStatus: (): Promise<PlacesStatus> => getJson(core, '/local-leads/discover/status'),
+    discoverPlaces: (body: DiscoverRequest): Promise<MapsResult<DiscoverResponse>> =>
+      sendMaps<DiscoverResponse>(core, 'POST', '/local-leads/discover', body),
+    savePlace: (body: SavePlaceBody): Promise<MapsResult<SavePlaceResult>> =>
+      sendMaps<SavePlaceResult>(core, 'POST', '/local-leads/from-place', body),
+    getLiveDetails: (leadId: string): Promise<MapsResult<LiveDetails>> =>
+      sendMaps<LiveDetails>(core, 'GET', `/local-leads/${encodeURIComponent(leadId)}/live-details`),
   };
 }

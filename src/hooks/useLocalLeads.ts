@@ -145,7 +145,7 @@ export function useLocalLeads(ui: UiLike) {
 
   return {
     options, summary, list, filters, searchInput, setSearchInput, page, setPage, loadState, busyId,
-    readOnly: ui.guestMode, setFilter, clearFilters, pickCell, retry, update, remove, add, importRows,
+    readOnly: ui.guestMode, setFilter, clearFilters, pickCell, retry, reload, update, remove, add, importRows,
   };
 }
 
