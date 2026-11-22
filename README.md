@@ -20,7 +20,7 @@ the sign-in screen has a "Fill the local demo account" button; production builds
 
 - `VITE_API_BASE_URL` — backend URL for deployed builds (for example the Render URL).
 - The Content-Security-Policy in `vercel.json` and `netlify.toml` allows API calls only to
-  `https://vsr-sales-engine-webapi.onrender.com`. Change it in both files if the API moves.
+  `https://vsrsalesenginewebapi.onrender.com`. Change it in both files if the API moves.
 
 ## Layout
 
