@@ -12,13 +12,16 @@ export interface LocalLead {
   hasWebsite: boolean;
   rating: number | null;
   reviewCount: number | null;
-  source: 'CSV import' | 'Manual';
+  source: 'CSV import' | 'Manual' | 'Google Maps';
   sourceLabel: string;
   status: LocalLeadStatus;
   notes: string;
   createdBy: string;
   createdAtUtc: string;
   updatedAtUtc: string;
+  /** Set for 'Google Maps' leads only; phone, website and rating are then fetched live, never stored. */
+  placeId?: string | null;
+  mapsUrl?: string | null;
 }
 
 export interface LocalLeadOptions {

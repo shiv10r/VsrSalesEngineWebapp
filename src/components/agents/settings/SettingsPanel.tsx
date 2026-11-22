@@ -5,7 +5,6 @@ import { useAgentSettings } from '../../../hooks/useAgentSettings';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { AgentRows } from './AgentRows';
 import { KeywordsSection } from './KeywordsSection';
-import { ScoringSection } from './ScoringSection';
 import { SettingsFooter } from './SettingsFooter';
 import { ShiftsSection } from './ShiftsSection';
 
@@ -35,7 +34,7 @@ export function SettingsPanel({ guest, notify, onSaved, onClose }: Props) {
         <div className="drawer-header">
           <div>
             <h2 id="as-title">Agent settings</h2>
-            <p>Change how the agents work. Nothing is sent without your approval.</p>
+            <p>Change how the agents work: names, which ones run, keywords and shifts.</p>
           </div>
           <button type="button" className="icon-button" onClick={close} aria-label="Close settings"><X size={18} /></button>
         </div>
@@ -57,7 +56,6 @@ export function SettingsPanel({ guest, notify, onSaved, onClose }: Props) {
           {ready && (
             <>
               <AgentRows settings={s.settings!} s={s} />
-              <ScoringSection s={s} />
               <KeywordsSection s={s} />
               <ShiftsSection settings={s.settings!} s={s} />
             </>

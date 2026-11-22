@@ -12,6 +12,7 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
 
   const [sources, setSources] = useState<SourceDefinition[]>([]);
   const [searchProfiles, setSearchProfiles] = useState<SearchProfile[]>([]);
+  const [sourcesError, setSourcesError] = useState(false);
   const [lastRunResult, setLastRunResult] = useState<DiscoveryRunResult | null>(null);
   const [isRunningDiscovery, setIsRunningDiscovery] = useState(false);
 
@@ -21,10 +22,13 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
         api.getSources(),
         api.getSearchProfiles(),
       ]);
-      if (srcData && srcData.length > 0) setSources(srcData);
-      if (profData && profData.length > 0) setSearchProfiles(profData);
+      setSources(srcData ?? []);
+      setSearchProfiles(profData ?? []);
+      setSourcesError(false);
     } catch {
-      // Fallback
+      setSources([]);
+      setSearchProfiles([]);
+      setSourcesError(true);
     }
   };
 
@@ -34,29 +38,28 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
       setSources(prev => prev.map(s => s.id === id ? updated : s));
       notify(`Source ${updated.name} updated to ${newStatus}`);
     } else {
-      setSources(prev => prev.map(s => s.id === id ? { ...s, policyStatus: newStatus } : s));
-      notify(`Source policy updated to ${newStatus} (local)`);
+      notify('Could not change the source: the server did not answer.');
     }
   };
 
   const handleRunDiscovery = async () => {
     setIsRunningDiscovery(true);
-    notify('Querying live external contract feeds (Hacker News, WWR, Remotive, Jobicy)...');
+    notify('Running discovery on the sources you selected...');
     try {
       const res = await api.runDiscovery({
         targetKeywords: query || 'Developer',
-        location: 'Worldwide Remote',
+        location: 'Uttar Pradesh, India',
         selectedSources: sourceFilters,
         maxResults: 30,
       });
       if (res) {
         setLastRunResult(res);
-        notify(`Live Discovery complete: ${res.newMatchesCount} real contract opportunities ingested!`);
+        notify(res.summary || `Discovery complete: ${res.newMatchesCount} new opportunities.`);
         await loadOpportunities();
         await loadContacts();
         go('Opportunities');
       } else {
-        notify('Live Discovery finished.');
+        notify('The server did not return a result.');
         await loadOpportunities();
         go('Opportunities');
       }
@@ -68,7 +71,7 @@ export function useDiscovery(ui: UiState, opps: OpportunitiesState, people: Cont
   };
 
   return {
-    sources, setSources, searchProfiles, setSearchProfiles, lastRunResult, setLastRunResult,
+    sources, sourcesError, setSources, searchProfiles, setSearchProfiles, lastRunResult, setLastRunResult,
     isRunningDiscovery, setIsRunningDiscovery, loadSourcesAndProfiles,
     handleUpdateSourceStatus, handleRunDiscovery,
   };

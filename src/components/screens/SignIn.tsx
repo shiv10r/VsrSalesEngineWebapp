@@ -7,6 +7,7 @@ import { SignInForm } from './SignInForm';
 interface SignInProps {
   onSuccess: (userEmail: string, isGuest: boolean) => void;
   onNotify: (msg: string) => void;
+  notice?: string;
 }
 
 export const SignIn: React.FC<SignInProps> = (props) => {
@@ -19,6 +20,8 @@ export const SignIn: React.FC<SignInProps> = (props) => {
         <div className="si-card">
           <h2>Sign in</h2>
           <p className="si-sub">Use your work account to open the workspace.</p>
+
+          {props.notice && <div className="si-alert" role="status"><span>{props.notice}</span></div>}
 
           <SignInForm s={s} />
 

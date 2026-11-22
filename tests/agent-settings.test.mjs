@@ -91,9 +91,9 @@ test('dirty check', async (t) => {
   await t.test('a fresh draft is not dirty', () => {
     assert.strictEqual(m.isDirty(settings, m.toDraft(settings)), false);
   });
-  await t.test('renaming, threshold, keywords and shift changes make it dirty', () => {
+  await t.test('renaming, switching an agent off, keywords and shift changes make it dirty', () => {
     const a = m.toDraft(settings); a.agents[1].name = 'Riya';
-    const b = m.toDraft(settings); b.draftThreshold = 60;
+    const b = m.toDraft(settings); b.agents[1].enabled = false;
     const c = m.toDraft(settings); c.keywords.target.push('Node');
     const d = m.toDraft(settings); d.shifts[0].intervalHours = 3;
     for (const draft of [a, b, c, d]) assert.strictEqual(m.isDirty(settings, draft), true);
@@ -132,10 +132,6 @@ test('validation mirrors the server rules', async (t) => {
     assert.deepStrictEqual(bad(d => { d.agents[0].name = "Anne-Marie O'Neil"; }), {});
     assert.deepStrictEqual(bad(d => { d.agents[0].name = 'Zoë'; }), {});
   });
-  await t.test('threshold must be a whole number from 0 to 100', () => {
-    for (const v of [-1, 101, 50.5, NaN]) assert.ok(bad(d => { d.draftThreshold = v; }).draftThreshold, `value ${v}`);
-    for (const v of [0, 100]) assert.deepStrictEqual(bad(d => { d.draftThreshold = v; }), {});
-  });
   await t.test('interval 1 to 24 only', () => {
     assert.ok(bad(d => { d.shifts[0].intervalHours = 0; })['shifts[0].intervalHours']);
     assert.ok(bad(d => { d.shifts[0].intervalHours = 25; })['shifts[0].intervalHours']);
@@ -157,15 +153,10 @@ test('validation mirrors the server rules', async (t) => {
 test('switch locks', async (t) => {
   const draft = m.toDraft(settings);
   await t.test('required agents cannot be switched off', () => {
-    assert.match(m.agentLockReason(settings.agents[0], draft.agents), /Required/);
-  });
-  await t.test('compliance is locked while the drafter is on, free once it is off', () => {
-    assert.match(m.agentLockReason(settings.agents[3], draft.agents), /Drafter is on/);
-    const off = m.toDraft(settings); off.agents[2].enabled = false;
-    assert.strictEqual(m.agentLockReason(settings.agents[3], off.agents), null);
+    assert.match(m.agentLockReason(settings.agents[0]), /Required/);
   });
   await t.test('other agents are free', () => {
-    assert.strictEqual(m.agentLockReason(settings.agents[1], draft.agents), null);
+    assert.strictEqual(m.agentLockReason(settings.agents[1]), null);
   });
 });
 

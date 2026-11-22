@@ -1,6 +1,8 @@
 import { Trash2 } from 'lucide-react';
 import type { LocalLead, LocalLeadStatus } from '../../types/localLeads';
 import { formatRating, safeWebsiteHref, telHref, websiteLabel } from '../../utils/localLeadsFormat';
+import type { LiveEntry } from '../../types/mapsSearch';
+import { LiveDetails } from './LiveDetails';
 import { NoteCell } from './NoteCell';
 
 interface Props {
@@ -11,6 +13,10 @@ interface Props {
   onStatus: (lead: LocalLead, status: LocalLeadStatus) => void;
   onNotes: (lead: LocalLead, notes: string) => Promise<boolean>;
   onDelete: (lead: LocalLead) => void;
+  /** Live Google details per lead id (Google Maps leads only). Shown in place, never saved. */
+  live?: Record<string, LiveEntry>;
+  onShowLive?: (lead: LocalLead) => void;
+  onHideLive?: (leadId: string) => void;
 }
 
 function WebsiteCell({ lead }: { lead: LocalLead }) {
@@ -27,7 +33,7 @@ function PhoneCell({ phone }: { phone: string }) {
   return href ? <a href={href} className="ll-link">{phone}</a> : <span>{phone}</span>;
 }
 
-export function LeadsTable({ items, statuses, readOnly, busyId, onStatus, onNotes, onDelete }: Props) {
+export function LeadsTable({ items, statuses, readOnly, busyId, onStatus, onNotes, onDelete, live, onShowLive, onHideLive }: Props) {
   return (
     <div className="ll-scroll">
       <table className="ll-table">
@@ -53,6 +59,7 @@ export function LeadsTable({ items, statuses, readOnly, busyId, onStatus, onNote
                   <strong className="ll-name">{lead.businessName}</strong>
                   {lead.address && <span className="ll-sub">{lead.address}</span>}
                   <span className="ll-sub">{lead.sourceLabel || lead.source}</span>
+                  {live?.[lead.id] && <LiveDetails entry={live[lead.id]} onHide={() => onHideLive?.(lead.id)} />}
                 </td>
                 <td><span className="ll-chip" title={lead.categoryReason || undefined}>{lead.category}</span></td>
                 <td>{lead.district}</td>
@@ -76,6 +83,9 @@ export function LeadsTable({ items, statuses, readOnly, busyId, onStatus, onNote
                     onSave={notes => onNotes(lead, notes)} />
                 </td>
                 <td>
+                  {onShowLive && lead.source === 'Google Maps' && lead.placeId && !live?.[lead.id] && (
+                    <button type="button" className="ms-live-btn" onClick={() => onShowLive(lead)}>Show live details</button>
+                  )}
                   {!readOnly && (
                     <button type="button" className="ll-icon danger" disabled={busy}
                       aria-label={`Delete ${lead.businessName}`} title="Delete lead" onClick={() => onDelete(lead)}>

@@ -18,14 +18,14 @@ export function SearchResultsScreen({ ctx }: { ctx: AppCtx }) {
       <div className="run-status">
         <div className="run-icon"><CheckCircle2 size={18} /></div>
         <div>
-          <strong>{lastRunResult ? `Run ${lastRunResult.runId} completed` : 'Search run completed'}</strong>
+          <strong>{lastRunResult ? `Run ${lastRunResult.runId} completed` : 'No search has been run in this session'}</strong>
           <p>
             {lastRunResult
-              ? `${lastRunResult.newMatchesCount} new matches · ${lastRunResult.duplicateCount} duplicate(s) evaluated · ${lastRunResult.evaluatedCount} total candidates`
-              : `${opportunities.length} matches · Source evidence recorded`}
+              ? lastRunResult.summary || `${lastRunResult.newMatchesCount} new matches · ${lastRunResult.duplicateCount} duplicate(s) evaluated · ${lastRunResult.evaluatedCount} total candidates`
+              : `${opportunities.length} stored opportunities`}
           </p>
         </div>
-        <Pill type="green">{lastRunResult?.status || 'Completed'}</Pill>
+        {lastRunResult && <Pill type="green">{lastRunResult.status}</Pill>}
       </div>
 
       {lastRunResult && lastRunResult.sourceMetrics && (
@@ -40,7 +40,7 @@ export function SearchResultsScreen({ ctx }: { ctx: AppCtx }) {
               </div>
               <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>
                 Fetched: <b>{sm.recordsFetched}</b> · New: <b>{sm.newMatches}</b>
-                {sm.rejectedByPolicy > 0 && <span style={{ color: '#d97706', marginLeft: '6px' }}>Policy restricted</span>}
+                {sm.note && <span style={{ color: '#d97706', marginLeft: '6px' }}>{sm.note}</span>}
               </div>
             </div>
           ))}
@@ -48,7 +48,7 @@ export function SearchResultsScreen({ ctx }: { ctx: AppCtx }) {
       )}
 
       <section className="panel table-panel">
-        <div className="panel-heading"><div><h2>Potential matches</h2><p>Validate opening details and contact channels before outreach.</p></div></div>
+        <div className="panel-heading"><div><h2>Potential matches</h2><p>Validate opening details and contact channels before you contact anyone.</p></div></div>
         {opportunitiesTable()}
       </section>
     </>

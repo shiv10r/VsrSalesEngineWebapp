@@ -4,17 +4,10 @@ import type { AppCtx } from '../../appContext';
 
 export function SourcesScreen({ ctx }: { ctx: AppCtx }) {
   const {
-    sources, pageHeading, loadSourcesAndProfiles, notify, handleUpdateSourceStatus,
+    sources, pageHeading, loadSourcesAndProfiles, notify, handleUpdateSourceStatus, sourcesError,
   } = ctx;
 
-  const activeSources = sources.length > 0 ? sources : [
-    { id: 'SRC-001', name: 'Company careers', description: 'Target corporate career pages and approved public job boards.', category: 'Careers', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Extracted from public career portal.', dailyRequestLimit: 500, currentDayRequests: 42, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-    { id: 'SRC-002', name: 'Public job board', description: 'Public indexing boards and technology work listings.', category: 'JobBoard', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Referenced from public job board listing.', dailyRequestLimit: 300, currentDayRequests: 18, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-    { id: 'SRC-003', name: 'Direct company research', description: 'Verified manual and automated deep research on target organizations.', category: 'Research', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Verified research entry by sales team member.', dailyRequestLimit: 200, currentDayRequests: 9, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-    { id: 'SRC-004', name: 'Public procurement', description: 'Government and public sector RFP / vendor registration portals.', category: 'Procurement', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Public procurement notice / tender reference.', dailyRequestLimit: 150, currentDayRequests: 3, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-    { id: 'SRC-005', name: 'Approved feed', description: 'Syndicated developer contract and technology requirement feeds.', category: 'Feed', policyStatus: 'Active', allowsDirectFetch: true, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Syndicated feed item with canonical URL.', dailyRequestLimit: 400, currentDayRequests: 24, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-    { id: 'SRC-006', name: 'LinkedIn handoff', description: 'Manual browser handoff only. Automated scraping and automated DMs prohibited by policy.', category: 'Social', policyStatus: 'Restricted', allowsDirectFetch: false, termsUrl: 'https://vsrsystems.com/compliance/source-policy', attributionNotice: 'Manual external browser link only. No automated access.', dailyRequestLimit: 0, currentDayRequests: 0, healthStatus: 'Healthy', lastCheckedAtUtc: new Date().toISOString() },
-  ];
+  const activeSources = sources;
 
   return (
     <>
@@ -23,6 +16,10 @@ export function SourcesScreen({ ctx }: { ctx: AppCtx }) {
         <Info size={15} />
         <span>Policy rule: LinkedIn handoff is restricted by design. Automated scraping and unsolicited platform DMs are prohibited.</span>
       </div>
+      {sourcesError && <p className="muted-cell" role="alert">Could not load the sources from the server. Press Refresh registry to try again.</p>}
+      {!sourcesError && activeSources.length === 0 && (
+        <p className="muted-cell">No sources came back from the server. Press Refresh registry; if this stays empty the server cannot be reached.</p>
+      )}
       <div className="sources-grid">
         {activeSources.map(s => (
           <section className="panel source-card" key={s.id || s.name}>
@@ -38,7 +35,7 @@ export function SourcesScreen({ ctx }: { ctx: AppCtx }) {
               <strong>{s.category} · {s.healthStatus}</strong>
             </div>
             <div style={{ fontSize: '11px', color: 'var(--muted)', margin: '8px 0' }}>
-              Daily requests: <b>{s.currentDayRequests}</b> / {s.dailyRequestLimit > 0 ? s.dailyRequestLimit : 'Manual only'}
+              Requests today: <b>{s.currentDayRequests}</b> / {s.dailyRequestLimit > 0 ? s.dailyRequestLimit : 'Manual only'}
             </div>
             <div className="source-card-bottom" style={{ marginTop: '10px' }}>
               <select

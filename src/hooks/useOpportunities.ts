@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { seedOpportunities } from '../data/seeds';
 import { api } from '../services/api';
 import { Opportunity } from '../types';
 import type { UiState } from './useUiState';
@@ -7,8 +6,9 @@ import type { UiState } from './useUiState';
 export function useOpportunities(ui: UiState) {
   const { query, statusFilter, sourceFilter, notify, userEmail } = ui;
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(seedOpportunities);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
 
+  const [opportunitiesError, setOpportunitiesError] = useState(false);
   const [detail, setDetail] = useState<Opportunity | null>(null);
 
   const loadOpportunities = async () => {
@@ -18,11 +18,12 @@ export function useOpportunities(ui: UiState) {
         status: statusFilter,
         source: sourceFilter,
       });
-      if (data && data.length > 0) {
-        setOpportunities(data);
-      }
+      setOpportunities(data ?? []);
+      setOpportunitiesError(false);
     } catch {
-      // Fallback
+      // Never keep stale rows after a failed load: show the error state instead.
+      setOpportunities([]);
+      setOpportunitiesError(true);
     }
   };
 
@@ -30,12 +31,10 @@ export function useOpportunities(ui: UiState) {
     const created = await api.createOpportunity({
       company: payload.company || 'New company',
       title: payload.title || 'Opportunity to qualify',
-      source: payload.source || 'Company careers',
-      location: payload.location || 'Remote · India',
+      source: payload.source || 'Manually added',
+      location: payload.location || 'Uttar Pradesh, India',
       fit: payload.fit || 'High',
       type: payload.type || 'Individual developer',
-      hasVendorDocRequirements: !!payload.docs,
-      vendorRequirementNotes: payload.vendorRequirementNotes,
       sourceUrl: payload.sourceUrl,
       evidenceSnippet: payload.evidenceSnippet,
     });
@@ -43,22 +42,7 @@ export function useOpportunities(ui: UiState) {
       setOpportunities(prev => [created, ...prev.filter(x => x.id !== created.id)]);
       notify(`Opportunity ${created.id} saved to server`);
     } else {
-      const fallback: Opportunity = {
-        id: `OP-${1050 + opportunities.length}`,
-        company: payload.company || 'New company',
-        title: payload.title || 'Opportunity to qualify',
-        source: payload.source || 'Manually added',
-        location: payload.location || 'Remote · India',
-        found: 'Just now',
-        status: 'New',
-        fit: payload.fit || 'High',
-        type: payload.type || 'Individual developer',
-        docs: !!payload.docs,
-        sourceUrl: payload.sourceUrl,
-        evidenceSnippet: payload.evidenceSnippet,
-      };
-      setOpportunities(prev => [fallback, ...prev]);
-      notify('Opportunity added to review queue');
+      notify('Could not save the opportunity: the server did not answer. Nothing was added.');
     }
   };
 
@@ -69,23 +53,7 @@ export function useOpportunities(ui: UiState) {
       setDetail(updated);
       notify(`Status transitioned to ${newStatus}`);
     } else {
-      const fallback: Opportunity = {
-        ...item,
-        status: newStatus,
-        statusHistory: [
-          ...(item.statusHistory || []),
-          {
-            fromStatus: item.status,
-            toStatus: newStatus,
-            changedBy: userEmail || 'Sales Member',
-            reason: reason || 'Status transition in UI',
-            changedAtUtc: new Date().toISOString(),
-          }
-        ]
-      };
-      setOpportunities(prev => prev.map(o => o.id === item.id ? fallback : o));
-      setDetail(fallback);
-      notify(`Status transitioned to ${newStatus} (local)`);
+      notify('Could not change the status: the server did not answer.');
     }
   };
 
@@ -111,7 +79,7 @@ export function useOpportunities(ui: UiState) {
   }), [opportunities, query, statusFilter, sourceFilter]);
 
   return {
-    opportunities, setOpportunities, detail, setDetail, loadOpportunities,
+    opportunities, opportunitiesError, setOpportunities, detail, setDetail, loadOpportunities,
     handleCreateOpportunity, handleStatusChange, handleArchive, handleDeleteOpportunity,
     filteredOpportunities,
   };

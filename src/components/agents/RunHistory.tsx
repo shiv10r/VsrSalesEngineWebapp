@@ -35,7 +35,6 @@ export function RunHistory({ runs, selectedRunId, now, onSelect }: Props) {
                   <div><b>{run.newLeads}</b>new</div>
                   <div><b>{run.duplicates}</b>dupes</div>
                   <div><b>{run.rejected}</b>rejected</div>
-                  <div><b>{run.draftsReady}</b>drafts</div>
                 </div>
               </button>
             </li>

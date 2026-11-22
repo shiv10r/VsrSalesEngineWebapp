@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { seedContacts } from '../data/seeds';
 import { api } from '../services/api';
 import { Contact } from '../types';
 import { NOT_CONTACTED_STATUS, REQUESTED_STATUS } from '../utils/linkedinHandoff';
@@ -8,16 +7,17 @@ import type { UiState } from './useUiState';
 export function useContacts(ui: UiState) {
   const { notify } = ui;
 
-  const [contacts, setContacts] = useState<Contact[]>(seedContacts);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactsError, setContactsError] = useState(false);
 
   const loadContacts = async () => {
     try {
       const data = await api.getContacts();
-      if (data && data.length > 0) {
-        setContacts(data);
-      }
+      setContacts(data ?? []);
+      setContactsError(false);
     } catch {
-      // Fallback
+      setContacts([]);
+      setContactsError(true);
     }
   };
 
@@ -36,22 +36,7 @@ export function useContacts(ui: UiState) {
       setContacts(prev => [created, ...prev.filter(c => c.id !== created.id)]);
       notify(`Contact ${created.name} added`);
     } else {
-      const fallback: Contact = {
-        id: `CNT-${1000 + contacts.length + 1}`,
-        name: payload.name || 'New contact',
-        company: payload.company || 'Unassigned',
-        role: payload.role || 'Unspecified',
-        email: payload.email || 'contact@example.com',
-        source: payload.source || 'Manual entry',
-        sourceUrl: payload.sourceUrl,
-        channelBasis: payload.channelBasis || 'ExplicitBusinessContact',
-        status: 'Not contacted',
-        qualificationStatus: 'Unverified',
-        isRoleAccount: false,
-        notes: payload.notes,
-      };
-      setContacts(prev => [fallback, ...prev]);
-      notify('Contact added (local)');
+      notify('Could not save the contact: the server did not answer. Nothing was added.');
     }
   };
 
@@ -61,8 +46,7 @@ export function useContacts(ui: UiState) {
       setContacts(prev => prev.map(c => c.id === id ? updated : c));
       notify(`Contact ${updated.name} updated to ${qualificationStatus}`);
     } else {
-      setContacts(prev => prev.map(c => c.id === id ? { ...c, qualificationStatus, status: status || c.status } : c));
-      notify(`Contact qualification updated (local)`);
+      notify('Could not update the contact: the server did not answer.');
     }
   };
 
@@ -74,8 +58,7 @@ export function useContacts(ui: UiState) {
       setContacts(prev => prev.map(c => c.id === contact.id ? updated : c));
       notify(requested ? `Marked ${updated.name} as LinkedIn requested` : `Cleared the LinkedIn mark for ${updated.name}`);
     } else {
-      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, status } : c));
-      notify('Saved on this device only: the server could not be reached');
+      notify('Not saved: the server could not be reached');
     }
   };
 
@@ -88,7 +71,7 @@ export function useContacts(ui: UiState) {
   };
 
   return {
-    contacts, setContacts, loadContacts, handleCreateContact, handleQualifyContact,
+    contacts, contactsError, setContacts, loadContacts, handleCreateContact, handleQualifyContact,
     handleDeleteContact, handleMarkLinkedInRequested,
   };
 }

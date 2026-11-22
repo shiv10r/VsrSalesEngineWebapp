@@ -7,16 +7,17 @@ export function useSchedules(ui: UiState) {
   const { notify, userEmail } = ui;
 
   const [schedules, setSchedules] = useState<AutomationSchedule[]>([]);
+  const [schedulesError, setSchedulesError] = useState(false);
   const [isRunningSchedule, setIsRunningSchedule] = useState<string | null>(null);
 
   const loadSchedules = async () => {
     try {
       const data = await api.getSchedules();
-      if (data && data.length > 0) {
-        setSchedules(data);
-      }
+      setSchedules(data ?? []);
+      setSchedulesError(false);
     } catch {
-      // Fallback
+      setSchedules([]);
+      setSchedulesError(true);
     }
   };
 
@@ -30,10 +31,9 @@ export function useSchedules(ui: UiState) {
         return;
       }
     } catch {
-      // Fallback
+      // handled below
     }
-    setSchedules(prev => prev.map(item => item.id === s.id ? { ...item, isEnabled: nextVal } : item));
-    notify(`Schedule '${s.name}' ${nextVal ? 'enabled' : 'paused'} (local)`);
+    notify(`Could not change schedule '${s.name}': the server did not answer.`);
   };
 
   const handleRunScheduleNow = async (s: AutomationSchedule) => {
@@ -66,7 +66,7 @@ export function useSchedules(ui: UiState) {
         cronExpression: payload.cronExpression,
         timezone: payload.timezone || 'UTC',
         profileId: payload.profileId,
-        selectedSources: payload.selectedSources || ['SRC-001', 'SRC-002'],
+        selectedSources: payload.selectedSources || [],
         runCap: payload.runCap || 50,
         quietHoursStart: payload.quietHoursStart || '22:00',
         quietHoursEnd: payload.quietHoursEnd || '06:00',
@@ -78,28 +78,9 @@ export function useSchedules(ui: UiState) {
         return;
       }
     } catch {
-      // Fallback
+      // handled below
     }
-    const fallback: AutomationSchedule = {
-      id: `SCHED-${Date.now()}`,
-      name: payload.name || 'New schedule',
-      description: payload.description || payload.audience || 'Recurring discovery run',
-      frequency: payload.frequency || 'Daily',
-      cronExpression: '0 8 * * *',
-      timezone: payload.timezone || 'UTC',
-      isEnabled: true,
-      selectedSources: ['SRC-001', 'SRC-002'],
-      runCap: payload.runCap || 50,
-      quietHoursStart: payload.quietHoursStart || '22:00',
-      quietHoursEnd: payload.quietHoursEnd || '06:00',
-      nextRunAtUtc: new Date(Date.now() + 86400000).toISOString(),
-      lastRunStatus: 'Pending',
-      createdBy: userEmail || 'user',
-      createdAtUtc: new Date().toISOString(),
-      updatedAtUtc: new Date().toISOString(),
-    };
-    setSchedules(prev => [fallback, ...prev]);
-    notify(`Schedule '${fallback.name}' created (local)`);
+    notify('Could not create the schedule: the server did not answer.');
   };
 
   const handleDeleteSchedule = async (id: string) => {
@@ -111,7 +92,7 @@ export function useSchedules(ui: UiState) {
   };
 
   return {
-    schedules, setSchedules, isRunningSchedule, setIsRunningSchedule, loadSchedules,
+    schedules, schedulesError, setSchedules, isRunningSchedule, setIsRunningSchedule, loadSchedules,
     handleToggleSchedule, handleRunScheduleNow, handleCreateSchedule, handleDeleteSchedule,
   };
 }

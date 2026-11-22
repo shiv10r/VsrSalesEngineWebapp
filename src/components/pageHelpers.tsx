@@ -1,14 +1,15 @@
 import {
-  ArrowUpRight, ChevronRight, ExternalLink, FileCheck2, Filter, MoreHorizontal, Search,
+  ChevronRight, ExternalLink, Filter, Search,
   SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import { Button, EmptyHint, Pill } from './ui/Primitives';
 import { Opportunity } from '../types';
+import { safeHttpUrl } from '../utils/safeUrl';
 import { statusTone } from '../utils/statusTone';
 import type { BaseCtx } from '../hooks/useBaseController';
 
 export function makePageHelpers(ctx: BaseCtx) {
-  const { query, setQuery, statusFilter, setStatusFilter, sourceFilter, setSourceFilter, opportunities, filteredOpportunities, setDetail, handleDeleteOpportunity } = ctx;
+  const { query, setQuery, statusFilter, setStatusFilter, sourceFilter, setSourceFilter, opportunities, filteredOpportunities, setDetail, handleDeleteOpportunity, opportunitiesError } = ctx;
 
   function pageHeading(title: string, subtitle: string, actions: any = null, eyebrow: any = null) {
     return (
@@ -23,19 +24,15 @@ export function makePageHelpers(ctx: BaseCtx) {
     );
   }
 
-  function kpi(title: string, value: string, change: string, Icon: any, tone: string = 'blue', note: string = 'vs. previous 7 days') {
+  function kpi(title: string, value: string, Icon: any, tone: string = 'blue', foot?: string) {
     return (
       <div className="kpi-card" key={title}>
         <div className={`kpi-icon ${tone}`}><Icon size={18} /></div>
         <div className="kpi-content">
           <div className="kpi-title">{title}</div>
           <div className="kpi-value">{value}</div>
-          <div className="kpi-foot">
-            <span className={change.startsWith('+') ? 'positive' : 'muted'}>{change.startsWith('+') && <ArrowUpRight size={13} />} {change}</span>
-            <span>{note}</span>
-          </div>
+          {foot && <div className="kpi-foot"><span>{foot}</span></div>}
         </div>
-        <MoreHorizontal size={17} className="kpi-more" />
       </div>
     );
   }
@@ -52,7 +49,7 @@ export function makePageHelpers(ctx: BaseCtx) {
             <Filter size={14} />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option>All statuses</option>
-              {['New', 'Needs review', 'Qualified', 'Contacted', 'Readiness hold', 'Interested'].map(s => <option key={s}>{s}</option>)}
+              {['New', 'Needs review', 'Qualified', 'Contacted', 'Interested'].map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           {showSource && (
@@ -108,13 +105,12 @@ export function makePageHelpers(ctx: BaseCtx) {
                 <td><Pill type={o.fit === 'High' ? 'green' : o.fit === 'Medium' ? 'blue' : 'neutral'}>{o.fit}</Pill></td>
                 <td>
                   <Pill type={statusTone(o.status)} dot>{o.status}</Pill>
-                  {o.docs && <span title="Vendor requirements detected" className="tiny-flag"><FileCheck2 size={13} /></span>}
                 </td>
                 <td className="muted-cell">{o.found}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {o.sourceUrl && (
-                      <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="row-more" title="Open live external posting" onClick={(e) => e.stopPropagation()}>
+                    {safeHttpUrl(o.sourceUrl) && (
+                      <a href={safeHttpUrl(o.sourceUrl)!} target="_blank" rel="noopener noreferrer" className="row-more" title="Open live external posting" onClick={(e) => e.stopPropagation()}>
                         <ExternalLink size={14} />
                       </a>
                     )}
@@ -128,8 +124,8 @@ export function makePageHelpers(ctx: BaseCtx) {
         </table>
         {rows.length === 0 && (
           <EmptyHint
-            title="No matching opportunities"
-            description="Try changing your search or filters."
+            title={opportunitiesError ? 'Could not load opportunities' : 'No matching opportunities'}
+            description={opportunitiesError ? 'The server did not answer. Check the connection and reopen this page.' : 'Try changing your search or filters.'}
             icon={Search}
             action="Clear filters"
             onAction={() => { setQuery(''); setStatusFilter('All statuses'); setSourceFilter('All sources'); }}

@@ -10,14 +10,13 @@ const m = await loadModule(`
   import { renderToStaticMarkup } from 'react-dom/server';
   import { createElement as h } from 'react';
   import { AgentRows } from './src/components/agents/settings/AgentRows.tsx';
-  import { ScoringSection } from './src/components/agents/settings/ScoringSection.tsx';
   import { KeywordsSection } from './src/components/agents/settings/KeywordsSection.tsx';
   import { ShiftsSection } from './src/components/agents/settings/ShiftsSection.tsx';
   import { SettingsFooter } from './src/components/agents/settings/SettingsFooter.tsx';
   import { SettingsPanel } from './src/components/agents/settings/SettingsPanel.tsx';
   import { toDraft } from './src/utils/agentSettingsForm.ts';
   export const render = (type, props) => renderToStaticMarkup(h(type, props));
-  export { AgentRows, ScoringSection, KeywordsSection, ShiftsSection, SettingsFooter, SettingsPanel, toDraft };
+  export { AgentRows, KeywordsSection, ShiftsSection, SettingsFooter, SettingsPanel, toDraft };
 `);
 
 const noop = () => {};
@@ -26,7 +25,7 @@ function state(over = {}, source = settings) {
     settings: source, draft: m.toDraft(source), loadState: 'ready', saving: false, errors: {}, saveMessage: '',
     dirty: false, canSave: false, readOnly: false,
     retry: noop, save: noop, discard: noop, setAgentName: noop, setAgentEnabled: noop,
-    setThreshold: noop, setKeywords: noop, setShift: noop, ...over,
+    setKeywords: noop, setShift: noop, ...over,
   };
 }
 const tag = (html, re) => (html.match(re) ?? [''])[0];
@@ -36,7 +35,7 @@ test('agent rows', async (t) => {
     const html = m.render(m.AgentRows, { settings, s: state() });
     assert.match(html, /<label[^>]*for="as-name-1"[^>]*>Name<\/label>/);
     assert.match(html, /placeholder="Priya"/);
-    assert.match(html, /Drafter - writes outreach drafts/);
+    assert.match(html, /Filter - drops non-software postings/);
   });
 
   await t.test('a required agent has a disabled switch and says why', () => {
@@ -46,12 +45,6 @@ test('agent rows', async (t) => {
     assert.match(first, /disabled=""/);
     assert.match(first, /aria-describedby="as-lock-0"/);
     assert.match(html, /id="as-lock-0"[^>]*>Required: the relay cannot run without this agent\./);
-  });
-
-  await t.test('compliance is locked while the drafter is on; a free agent is not disabled', () => {
-    const html = m.render(m.AgentRows, { settings, s: state() });
-    assert.match(tag(html, /<button[^>]*aria-label="Meera is on"[^>]*>/), /disabled=""/);
-    assert.doesNotMatch(tag(html, /<button[^>]*aria-label="Priya is on"[^>]*>/), /disabled/);
   });
 
   await t.test('reset-to-default only shows for a renamed agent', () => {
@@ -81,19 +74,7 @@ test('agent rows', async (t) => {
   });
 });
 
-test('scoring and keywords', async (t) => {
-  await t.test('threshold shows the plain-language explanation and the current value', () => {
-    const html = m.render(m.ScoringSection, { s: state() });
-    assert.match(html, /Leads scoring above this get a draft\. Nothing is sent\./);
-    assert.match(tag(html, /<input[^>]*id="as-threshold"[^>]*>/), /value="50"/);
-  });
-
-  await t.test('a threshold error is attached to the number box', () => {
-    const html = m.render(m.ScoringSection, { s: state({ errors: { draftThreshold: 'Enter a whole number from 0 to 100.' } }) });
-    assert.match(tag(html, /<input[^>]*id="as-threshold"[^>]*>/), /aria-describedby="as-threshold-err"/);
-    assert.match(html, /id="as-threshold-err"[^>]*role="alert"/);
-  });
-
+test('keywords', async (t) => {
   await t.test('keywords render as removable tags with labelled inputs', () => {
     const html = m.render(m.KeywordsSection, { s: state() });
     assert.match(html, /<label[^>]*for="as-kw-target"[^>]*>Look for/);
