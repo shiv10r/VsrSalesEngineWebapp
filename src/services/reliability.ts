@@ -53,22 +53,6 @@ export function createReliabilityApi(core: ApiCore) {
       }
     },
 
-    async simulateFailure(failureType: string, jobType?: string, referenceId?: string): Promise<ExecutionRecord | null> {
-      try {
-        const res = await fetch(`${API_BASE_URL}/reliability/simulate-failure`, {
-          method: 'POST',
-          headers: core.getHeaders(),
-          body: JSON.stringify({ failureType, jobType, referenceId }),
-        });
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch {
-        // Fallback
-      }
-      return null;
-    },
-
     async getOperationalSmokeDrill(): Promise<{ status: string; allChecksPassed: boolean; checks: Array<{ component: string; status: string; detail: string }>; timestampUtc: string }> {
       try {
         const res = await fetch(`${API_BASE_URL}/reliability/smoke-test`, {
@@ -78,19 +62,9 @@ export function createReliabilityApi(core: ApiCore) {
           return await res.json();
         }
       } catch {
-        // Return simulated drill if backend offline
+        // fall through to the error below
       }
-      return {
-        status: 'PASS',
-        allChecksPassed: true,
-        checks: [
-          { component: 'DatabaseRepository', status: 'PASS', detail: 'Persistent data store connection active.' },
-          { component: 'SourceRegistry', status: 'PASS', detail: 'Permitted discovery sources configured.' },
-          { component: 'ReliabilityEngine', status: 'PASS', detail: 'Reliability and backoff safeguards operational.' },
-          { component: 'OutreachSafety', status: 'PASS', detail: 'OutreachMode: Test, Sink: dev-sink@vsrsalesengine.local' },
-        ],
-        timestampUtc: new Date().toISOString(),
-      };
+      throw new Error('The server could not be reached.');
     },
 
     async getKillSwitchStatus(): Promise<{ isEngaged: boolean; mode: string }> {
@@ -104,7 +78,7 @@ export function createReliabilityApi(core: ApiCore) {
       } catch {
         // Fallback
       }
-      return { isEngaged: false, mode: 'Test' };
+      throw new Error('The server could not be reached.');
     },
 
     async toggleKillSwitch(engaged?: boolean): Promise<{ isEngaged: boolean; action: string; message: string }> {
@@ -120,11 +94,7 @@ export function createReliabilityApi(core: ApiCore) {
       } catch {
         // Fallback
       }
-      return {
-        isEngaged: engaged ?? false,
-        action: engaged ? 'KillSwitchEngaged' : 'KillSwitchDisengaged',
-        message: engaged ? 'Operational kill switch engaged. Sending halted.' : 'Operational kill switch disengaged.',
-      };
+      throw new Error('The server could not be reached, so the kill switch was not changed.');
     },
   };
 

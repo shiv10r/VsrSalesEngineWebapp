@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { seedCampaigns } from '../data/seeds';
 import { api } from '../services/api';
 import { Campaign } from '../types';
 import type { UiState } from './useUiState';
@@ -7,18 +6,16 @@ import type { UiState } from './useUiState';
 export function useCampaigns(ui: UiState) {
   const { notify } = ui;
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>(seedCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 
   const [selectedGateCampaign, setSelectedGateCampaign] = useState<Campaign | null>(null);
 
   const loadCampaigns = async () => {
     try {
       const data = await api.getCampaigns();
-      if (data && data.length > 0) {
-        setCampaigns(data);
-      }
+      setCampaigns(data ?? []);
     } catch {
-      // Fallback
+      // The server banner already says when it cannot be reached; keep what is on screen.
     }
   };
 
@@ -33,8 +30,7 @@ export function useCampaigns(ui: UiState) {
           return;
         }
       }
-      setCampaigns(prev => prev.map(item => item.name === c.name ? { ...item, status: newStatus } : item));
-      notify(`Campaign '${c.name}' is now ${newStatus} (local)`);
+      notify(`Could not change campaign '${c.name}': the server did not answer.`);
     } catch (ex: any) {
       notify(`Cannot activate campaign: ${ex.message}`);
     }

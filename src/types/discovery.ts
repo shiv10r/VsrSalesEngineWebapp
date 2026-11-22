@@ -45,5 +45,7 @@ export interface DiscoveryRunResult {
     newMatches: number;
     rejectedByPolicy: number;
     status: string;
+    note?: string | null;
   }[];
+  summary?: string;
 }

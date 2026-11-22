@@ -139,22 +139,7 @@ export function useDraftComposer({ contacts, opportunities, prefillSubject, init
         });
         notify('Outreach draft generated with truthfulness checks.');
       } else {
-        // Fallback local synthesis
-        const fallbackSubject = `Inquiry regarding ${companyName}'s ${opportunityTitle || 'engineering'} initiatives`;
-        const fallbackBody = `Hi ${contactName || 'Team'},\n\nI noticed ${companyName} is exploring ${opportunityTitle || 'modernization projects'}.\n\nAt VSR Technologies, we specialize in ${serviceProposition || 'cloud migrations and full-stack engineering'}.\n\nWould you be open to a 10-minute introductory call next week?\n\nBest regards,\nVSR Outreach Lead\nVSR Technologies\n\nTo opt out of future updates, reply 'UNSUBSCRIBE' or visit https://vsrtechnologies.com/outreach/opt-out.\nVSR Technologies, 100 Enterprise Way, Suite 400, Austin TX 78701.`;
-        setSubject(fallbackSubject);
-        setBody(fallbackBody);
-        setFactsUsed([`Company: ${companyName}`, `Opportunity: ${opportunityTitle || 'Technical initiative'}`]);
-        setValidation({
-          isValid: true,
-          missingVariables: [],
-          prohibitedClaims: [],
-          warnings: [],
-          hasUnsubscribeMechanism: true,
-          hasPhysicalAddress: true,
-          hasSenderIdentity: true,
-        });
-        notify('Draft generated (local fallback).');
+        notify('Could not generate a draft: the server did not answer. Nothing was invented.');
       }
     } finally {
       setIsGenerating(false);

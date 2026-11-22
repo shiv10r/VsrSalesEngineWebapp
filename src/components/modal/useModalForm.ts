@@ -4,8 +4,8 @@ import { api } from '../../services/api';
 export function useModalForm(modal: any, onNotify: (message: string) => void) {
   const [name, setName] = useState('');
   const [secondary, setSecondary] = useState('');
-  const [source, setSource] = useState('Company careers');
-  const [location, setLocation] = useState('Remote · India');
+  const [source, setSource] = useState('Manually added');
+  const [location, setLocation] = useState('Uttar Pradesh, India');
   const [fit, setFit] = useState('High');
   const [type, setType] = useState('Individual developer');
   const [docs, setDocs] = useState(false);
@@ -43,7 +43,7 @@ export function useModalForm(modal: any, onNotify: (message: string) => void) {
         if (result.opportunity.evidenceSnippet) setEvidenceSnippet(result.opportunity.evidenceSnippet);
         if (result.opportunity.requiresVendorDocs !== undefined) setDocs(result.opportunity.requiresVendorDocs);
         if (result.opportunity.vendorRequirementNotes) setVendorRequirementNotes(result.opportunity.vendorRequirementNotes);
-        onNotify('✨ Gemini AI auto-filled opportunity fields');
+        onNotify('AI form assistant filled opportunity fields');
       } else if (modal.type === 'contact' && result?.contact) {
         if (result.contact.name) setName(result.contact.name);
         if (result.contact.company) setSecondary(result.contact.company);
@@ -53,11 +53,13 @@ export function useModalForm(modal: any, onNotify: (message: string) => void) {
         if (result.contact.channelBasis) setChannelBasis(result.contact.channelBasis);
         if (result.contact.sourceUrl) setSourceUrl(result.contact.sourceUrl);
         if (result.contact.notes) setContactNotes(result.contact.notes);
-        onNotify('✨ Gemini AI auto-filled contact fields');
+        onNotify('AI form assistant filled contact fields');
       } else if (modal.type === 'campaign' && result?.campaign) {
         if (result.campaign.name) setName(result.campaign.name);
         if (result.campaign.audience) setSecondary(result.campaign.audience);
-        onNotify('✨ Gemini AI auto-filled campaign details');
+        onNotify('AI form assistant filled campaign details');
+      } else {
+        onNotify('The AI form assistant is not available right now. Please fill the form by hand.');
       }
     } finally {
       setIsAiLoading(false);
@@ -65,15 +67,10 @@ export function useModalForm(modal: any, onNotify: (message: string) => void) {
   };
 
   const samplePrompts = modal.type === 'opportunity' ? [
-    'Sr .NET Lead at Microsoft India, high fit, vendor docs needed',
-    'Legacy modernization partner for CloudHarbor Labs Bengaluru',
-    'React frontend contractor for Northstar Digital Remote'
-  ] : modal.type === 'contact' ? [
-    'Maya Patel, Engineering Manager at Northstar Digital, maya.patel@northstar.com',
-    'Arjun Mehta, Talent Partner at BrightPath Health, arjun.mehta@brightpath.com'
+    'Senior .NET developer contract, high fit, vendor documents needed',
+    'React frontend contractor, remote'
   ] : modal.type === 'campaign' ? [
-    'Healthcare CTOs for .NET Cloud Migration',
-    'BFSI Engineering Partners in India and APAC'
+    'Healthcare CTOs for .NET cloud migration'
   ] : [];
 
   return {

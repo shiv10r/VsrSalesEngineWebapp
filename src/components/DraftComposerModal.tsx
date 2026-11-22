@@ -81,7 +81,7 @@ export function DraftComposerModal(props: DraftComposerModalProps) {
               <input value={contactName} onChange={e => setContactName(e.target.value)} placeholder="e.g. Maya Patel" />
             </label>
             <label className="field-label">Company Name
-              <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Northstar Digital" />
+              <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Company name" />
             </label>
             <label className="field-label">Role
               <input value={contactRole} onChange={e => setContactRole(e.target.value)} placeholder="e.g. Engineering Manager" />

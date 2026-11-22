@@ -6,14 +6,17 @@ export function ReportsScreen({ ctx }: { ctx: AppCtx }) {
     pageHeading, kpi, opportunities, outreachRows,
   } = ctx;
 
+  const qualified = opportunities.filter(o => o.status === 'Qualified').length;
+  const replies = outreachRows.filter(r => r.status === 'Replied').length;
+
   return (
     <>
       {pageHeading('Reports & insights', 'Track discovery coverage and workflow outcomes without inventing performance claims.', null, 'PERFORMANCE')}
       <div className="kpi-grid">
-        {kpi('Opportunities found', `${opportunities.length}`, 'Active', Target, 'blue')}
-        {kpi('Qualified rate', `${opportunities.length > 0 ? Math.round((opportunities.filter(o => o.status === 'Qualified').length / opportunities.length) * 100) : 0}%`, 'Verified', CheckCheck, 'green')}
-        {kpi('Reply rate', outreachRows.some(r => r.status === 'Replied') ? '100%' : '0%', 'Monitored', MessageSquareText, 'violet')}
-        {kpi('Source coverage', `${new Set(opportunities.map(o => o.source)).size || 1}`, 'Active sources', Globe2, 'amber')}
+        {kpi('Opportunities found', `${opportunities.length}`, Target, 'blue')}
+        {kpi('Qualified', `${qualified}`, CheckCheck, 'green', opportunities.length > 0 ? `${Math.round((qualified / opportunities.length) * 100)}% of opportunities` : 'No opportunities yet')}
+        {kpi('Replies', `${replies}`, MessageSquareText, 'violet')}
+        {kpi('Sources with results', `${new Set(opportunities.map(o => o.source)).size}`, Globe2, 'amber')}
       </div>
     </>
   );

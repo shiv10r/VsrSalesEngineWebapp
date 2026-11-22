@@ -10,7 +10,7 @@ export function AiAssistant({ form, modal }: { form: ModalForm; modal: any }) {
     <div className="ai-form-assistant">
       <div className="ai-assistant-header">
         <span className="ai-assistant-badge">
-          <Sparkles size={12} /> Gemini 2.5 Flash Form Assistant
+          <Sparkles size={12} /> AI form assistant
         </span>
         <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Auto-generates structured fields</span>
       </div>

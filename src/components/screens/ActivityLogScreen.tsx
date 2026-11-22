@@ -1,56 +1,15 @@
 import { RefreshCw, TriangleAlert } from 'lucide-react';
-import { ActivityList } from '../Helpers';
 import { Button, Pill } from '../ui/Primitives';
-import { seedActivities } from '../../data/seeds';
 import type { AppCtx } from '../../appContext';
 
 export function ActivityLogScreen({ ctx }: { ctx: AppCtx }) {
   const {
-    reliabilityMetrics, failedRuns, pageHeading, loadReliabilityData, notify, activityTab,
-    setActivityTab, handleSimulateFailure, isRetryingId, handleRetryFailure,
+    reliabilityMetrics, failedRuns, pageHeading, go, loadReliabilityData, notify, activityTab,
+    setActivityTab, isRetryingId, handleRetryFailure,
   } = ctx;
 
-  const metrics = reliabilityMetrics || {
-    repeatedSourceFailures: { 'Company careers': 1 },
-    schedulerLagSeconds: 0,
-    deadLetterCount: 1,
-    failedSendCount: 1,
-    averageRunDurationMs: 450,
-    systemHealth: 'Healthy',
-    activeAlerts: []
-  };
-
-  const failuresList = failedRuns.length > 0 ? failedRuns : [
-    {
-      id: 'EXEC-002',
-      jobType: 'Discovery',
-      referenceId: 'SRC-001',
-      status: 'FailedTransient',
-      failureClassification: 'Transient',
-      attemptCount: 1,
-      maxAttempts: 3,
-      errorMessage: 'HTTP 429 Too Many Requests: Upstream rate limit reached on company careers portal',
-      nextRetryAtUtc: new Date(Date.now() + 300000).toISOString(),
-      timeBudgetSeconds: 60,
-      durationMs: 650,
-      canRetry: true,
-      createdAtUtc: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 'EXEC-003',
-      jobType: 'OutreachSend',
-      referenceId: 'CMP-001',
-      status: 'DeadLetter',
-      failureClassification: 'Permanent',
-      attemptCount: 1,
-      maxAttempts: 1,
-      errorMessage: 'Suppression rule triggered: Domain @blocked-client.example is on the exclusion list',
-      timeBudgetSeconds: 30,
-      durationMs: 120,
-      canRetry: false,
-      createdAtUtc: new Date(Date.now() - 7200000).toISOString(),
-    }
-  ];
+  const metrics = reliabilityMetrics;
+  const failuresList = failedRuns;
 
   return (
     <>
@@ -74,11 +33,18 @@ export function ActivityLogScreen({ ctx }: { ctx: AppCtx }) {
 
       {activityTab === 'audit' && (
         <section className="panel panel-pad activity-panel">
-          <ActivityList items={seedActivities} />
+          <p className="muted-cell" style={{ margin: 0 }}>
+            No audit entries are recorded here yet. Agent runs and their step-by-step log are on the Agents page.
+            <button className="text-link" style={{ marginLeft: 8 }} onClick={() => go('Agents')}>Open Agents</button>
+          </p>
         </section>
       )}
 
-      {activityTab === 'metrics' && (
+      {activityTab === 'metrics' && !metrics && (
+        <section className="panel panel-pad"><p className="muted-cell" style={{ margin: 0 }}>No health metrics from the server yet. Press Refresh metrics; if this stays empty the server cannot be reached.</p></section>
+      )}
+
+      {activityTab === 'metrics' && metrics && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
             <div className="panel panel-pad" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -145,27 +111,6 @@ export function ActivityLogScreen({ ctx }: { ctx: AppCtx }) {
       {activityTab === 'failures' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <section className="panel panel-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div>
-                <h3 style={{ fontSize: '14px' }}>Failure Injection & Resiliency Verification</h3>
-                <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>Simulate transient and permanent errors to verify retry classification and dead-letter protection.</p>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <Button small variant="secondary" onClick={() => handleSimulateFailure('Transient')}>
-                  Simulate 503 (Transient)
-                </Button>
-                <Button small variant="secondary" onClick={() => handleSimulateFailure('RateLimitExceeded')}>
-                  Simulate 429 (Rate Limit)
-                </Button>
-                <Button small variant="secondary" onClick={() => handleSimulateFailure('Timeout')}>
-                  Simulate Timeout
-                </Button>
-                <Button small variant="secondary" onClick={() => handleSimulateFailure('Permanent')}>
-                  Simulate Policy Block (Permanent)
-                </Button>
-              </div>
-            </div>
-
             <div className="table-wrapper">
               <table className="data-table">
                 <thead>
@@ -215,6 +160,9 @@ export function ActivityLogScreen({ ctx }: { ctx: AppCtx }) {
                       </td>
                     </tr>
                   ))}
+                  {failuresList.length === 0 && (
+                    <tr><td colSpan={7} className="muted-cell" style={{ textAlign: 'center', padding: '24px' }}>No failed runs recorded.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>

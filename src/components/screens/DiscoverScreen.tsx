@@ -1,13 +1,12 @@
 import {
-  BriefcaseBusiness, Building2, CalendarClock, Check, Clock3, FileText, Globe2, Link2, Search,
-  Server, ShieldCheck, Sparkles, Zap,
+  CalendarClock, Check, Clock3, Globe2, Search, ShieldCheck, Sparkles, Zap,
 } from 'lucide-react';
 import { Button } from '../ui/Primitives';
 import type { AppCtx } from '../../appContext';
 
 export function DiscoverScreen({ ctx }: { ctx: AppCtx }) {
   const {
-    pageHeading, go, query, setQuery, setSourceFilters, sourceFilters, isRunningDiscovery,
+    pageHeading, go, query, setQuery, setSourceFilters, sourceFilters, isRunningDiscovery, sources,
     handleRunDiscovery,
   } = ctx;
 
@@ -25,10 +24,10 @@ export function DiscoverScreen({ ctx }: { ctx: AppCtx }) {
             <div className="big-input">
               <Search size={18} />
               <input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. .NET developer, React contractor, software delivery project" />
-              <button onClick={() => { setQuery(''); setSourceFilters(['Company careers', 'Public job boards', 'Approved feeds', 'Public procurement']); }}>Clear</button>
+              <button onClick={() => { setQuery(''); setSourceFilters([]); }}>Clear</button>
             </div>
             <div className="field-grid">
-              <label className="field-label">Location or market<input placeholder="India, remote, Europe..." defaultValue="India · Remote" /></label>
+              <label className="field-label">Location or market<input placeholder="Uttar Pradesh, India" defaultValue="Uttar Pradesh, India" /></label>
               <label className="field-label">Opportunity type
                 <select defaultValue="All relevant types">
                   <option>All relevant types</option>
@@ -48,22 +47,12 @@ export function DiscoverScreen({ ctx }: { ctx: AppCtx }) {
             </div>
             <div className="divider-line" />
             <div className="section-title-row">
-              <div><h3>Choose sources</h3><p>Only enabled, permitted connectors can be queried.</p></div>
+              <div><h3>Choose sources</h3><p>Only sources that are switched on under Sources can be read.</p></div>
               <span className="selected-count">{sourceFilters.length} selected</span>
             </div>
             <div className="source-choice-grid">
-              {[
-                { name: "Hacker News (Freelance & Who's Hiring)", desc: "Founder-direct contractor & dev requisitions", tag: 'Live YC/HN', icon: Zap },
-                { name: "We Work Remotely (Contracts)", desc: "Verified programming contract RSS feeds", tag: 'Live Feed', icon: Globe2 },
-                { name: "Remotive (Contract / Freelance)", desc: "Contract-only software engineering gigs", tag: 'Live API', icon: BriefcaseBusiness },
-                { name: "Jobicy (Developer Contracts)", desc: "Live developer contracts & vendor gigs", tag: 'Live API', icon: Server },
-                { name: 'Company careers', desc: 'Public career pages', tag: 'Direct', icon: Building2 },
-                { name: 'Public job boards', desc: 'Public listings and feeds', tag: 'Job board', icon: BriefcaseBusiness },
-                { name: 'Approved feeds', desc: 'Configured APIs / aggregators', tag: 'API', icon: Server },
-                { name: 'Public procurement', desc: 'Tender and buyer portals', tag: 'Public', icon: FileText },
-                { name: 'LinkedIn handoff', desc: 'Research link / manual review', tag: 'Handoff', icon: Link2 },
-                { name: 'Direct company research', desc: 'Company services and signals', tag: 'Web', icon: Globe2 }
-              ].map(s => (
+              {sources.length === 0 && <p className="muted-cell">No sources are registered yet, or the server cannot be reached.</p>}
+              {sources.filter(x => x.category !== 'Social').map(x => ({ name: x.name, desc: x.description, tag: x.policyStatus === 'Active' ? 'On' : 'Off', icon: x.policyStatus === 'Active' ? Zap : Globe2 })).map(s => (
                 <button
                   key={s.name}
                   className={`source-choice ${sourceFilters.includes(s.name) ? 'checked' : ''}`}
@@ -83,7 +72,7 @@ export function DiscoverScreen({ ctx }: { ctx: AppCtx }) {
                 disabled={isRunningDiscovery}
                 onClick={handleRunDiscovery}
               >
-                {isRunningDiscovery ? 'Running discovery...' : 'Run live discovery'}
+                {isRunningDiscovery ? 'Running discovery...' : 'Run discovery'}
               </Button>
             </div>
           </section>
