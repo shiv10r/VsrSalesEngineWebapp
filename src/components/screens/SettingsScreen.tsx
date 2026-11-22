@@ -1,12 +1,11 @@
-import { ChevronRight, Code2, KeyRound, LogOut, Moon, Play, ShieldAlert, Sun } from 'lucide-react';
+import { ChevronRight, Code2, KeyRound, LogOut, Moon, Sun } from 'lucide-react';
 import { SettingRow } from '../Helpers';
 import { Button, Pill } from '../ui/Primitives';
 import type { AppCtx } from '../../appContext';
 
 export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
   const {
-    pageHeading, settingsTab, setSettingsTab, dark, setDark, guestMode, go, killSwitchEngaged,
-    handleToggleKillSwitch, handleRunSmokeDrill, isRunningSmokeDrill, smokeDrillResult,
+    pageHeading, settingsTab, setSettingsTab, dark, setDark, guestMode, go,
   } = ctx;
 
   return (
@@ -14,7 +13,7 @@ export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
       {pageHeading('Settings', 'Manage the workspace defaults and development environment safeguards.', null, 'WORKSPACE CONFIGURATION')}
       <div className="settings-layout">
         <aside className="panel settings-nav">
-          {['General', 'Authentication', 'Guest mode', 'Outreach safety', 'Source policy', 'Data & privacy', 'About'].map(t => (
+          {['General', 'Authentication', 'Guest mode', 'Source policy', 'Data & privacy', 'About'].map(t => (
             <button key={t} className={settingsTab === t ? 'selected' : ''} onClick={() => setSettingsTab(t)}>
               <span>{t}</span><ChevronRight size={14} />
             </button>
@@ -57,51 +56,6 @@ export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
               </div>
             </>
           )}
-          {settingsTab === 'Outreach safety' && (
-            <>
-              <div className="settings-title"><h2>Outreach safety & kill switch</h2></div>
-              <div className="auth-callout" style={{ borderColor: killSwitchEngaged ? 'var(--red, #ef4444)' : 'var(--green, #22c55e)' }}>
-                <ShieldAlert size={20} color={killSwitchEngaged ? '#ef4444' : '#22c55e'} />
-                <div style={{ flex: 1 }}>
-                  <strong>{killSwitchEngaged ? 'EMERGENCY KILL SWITCH ACTIVE' : 'Outreach Protection: Active & Guarded'}</strong>
-                  <p>{killSwitchEngaged ? 'All outbound sending is halted immediately. No live emails or sink messages will be sent.' : 'All outreach is strictly routed to the safe test sink (dev-sink@vsrsalesengine.local). Real sending remains locked.'}</p>
-                </div>
-                <Button variant={killSwitchEngaged ? 'primary' : 'secondary'} onClick={handleToggleKillSwitch}>
-                  {killSwitchEngaged ? 'Disengage kill switch' : 'Engage emergency kill switch'}
-                </Button>
-              </div>
-
-              <SettingRow title="Operational smoke drill" desc="Validate DB connectivity, permitted sources, reliability metrics, and sandbox sink.">
-                <Button variant="secondary" onClick={handleRunSmokeDrill} disabled={isRunningSmokeDrill}>
-                  <Play size={14} /> {isRunningSmokeDrill ? 'Verifying...' : 'Run operational smoke drill'}
-                </Button>
-              </SettingRow>
-
-              {smokeDrillResult && (
-                <div style={{ background: 'var(--panel-subtle, rgba(255,255,255,0.03))', borderRadius: 8, padding: 14, margin: '12px 0', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>Operational Verification Result</span>
-                    <Pill type={smokeDrillResult.status === 'PASS' ? 'green' : 'amber'}>{smokeDrillResult.status}</Pill>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {smokeDrillResult.checks?.map((c: any, idx: number) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>{c.component}</span>
-                        <span>{c.detail} <Pill type={c.status === 'PASS' ? 'green' : 'red'}>{c.status}</Pill></span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <SettingRow title="Default sink recipient" desc="Safe destination for intercepted drafts.">
-                <code>dev-sink@vsrsalesengine.local</code>
-              </SettingRow>
-              <SettingRow title="Statutory compliance gate" desc="Unsubscribe headers, postal identity, and opt-out policy.">
-                <Pill type="green">Enforced</Pill>
-              </SettingRow>
-            </>
-          )}
           {settingsTab === 'Source policy' && (
             <>
               <div className="settings-title"><h2>Source policy & legal boundaries</h2></div>
@@ -120,12 +74,6 @@ export function SettingsScreen({ ctx }: { ctx: AppCtx }) {
             <>
               <div className="settings-title"><h2>Data & privacy protection</h2></div>
               <SettingRow title="SSRF protection" desc="Client and server blocks against private/loopback IP requests.">
-                <Pill type="green">Active</Pill>
-              </SettingRow>
-              <SettingRow title="Prompt injection scrub" desc="Neutralizes system commands in external job postings.">
-                <Pill type="green">Active</Pill>
-              </SettingRow>
-              <SettingRow title="Pre-send suppression lookup" desc="Checks suppression database prior to any dispatch attempt.">
                 <Pill type="green">Active</Pill>
               </SettingRow>
             </>

@@ -48,7 +48,7 @@ export function SearchResultsScreen({ ctx }: { ctx: AppCtx }) {
       )}
 
       <section className="panel table-panel">
-        <div className="panel-heading"><div><h2>Potential matches</h2><p>Validate opening details and contact channels before outreach.</p></div></div>
+        <div className="panel-heading"><div><h2>Potential matches</h2><p>Validate opening details and contact channels before you contact anyone.</p></div></div>
         {opportunitiesTable()}
       </section>
     </>

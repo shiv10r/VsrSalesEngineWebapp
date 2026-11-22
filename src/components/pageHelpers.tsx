@@ -1,5 +1,5 @@
 import {
-  ChevronRight, ExternalLink, FileCheck2, Filter, Search,
+  ChevronRight, ExternalLink, Filter, Search,
   SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import { Button, EmptyHint, Pill } from './ui/Primitives';
@@ -48,7 +48,7 @@ export function makePageHelpers(ctx: BaseCtx) {
             <Filter size={14} />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option>All statuses</option>
-              {['New', 'Needs review', 'Qualified', 'Contacted', 'Readiness hold', 'Interested'].map(s => <option key={s}>{s}</option>)}
+              {['New', 'Needs review', 'Qualified', 'Contacted', 'Interested'].map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           {showSource && (
@@ -104,7 +104,6 @@ export function makePageHelpers(ctx: BaseCtx) {
                 <td><Pill type={o.fit === 'High' ? 'green' : o.fit === 'Medium' ? 'blue' : 'neutral'}>{o.fit}</Pill></td>
                 <td>
                   <Pill type={statusTone(o.status)} dot>{o.status}</Pill>
-                  {o.docs && <span title="Vendor requirements detected" className="tiny-flag"><FileCheck2 size={13} /></span>}
                 </td>
                 <td className="muted-cell">{o.found}</td>
                 <td>

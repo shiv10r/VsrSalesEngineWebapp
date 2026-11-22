@@ -30,7 +30,6 @@ export interface ShiftSetting {
 
 export interface AgentSettings {
   agents: AgentSetting[];
-  draftThreshold: number;
   keywords: KeywordSettings;
   shifts: ShiftSetting[];
   availableSources: string[];
@@ -41,7 +40,6 @@ export interface AgentSettings {
 /** The editable part, and the PUT body. */
 export interface SettingsDraft {
   agents: { id: AgentId; name: string; enabled: boolean }[];
-  draftThreshold: number;
   keywords: KeywordSettings;
   shifts: {
     scheduleId: string;
@@ -54,7 +52,7 @@ export interface SettingsDraft {
 }
 
 export interface FieldError {
-  field: string; // e.g. 'agents[2].name', 'shifts[0].intervalHours', 'draftThreshold'
+  field: string; // e.g. 'agents[2].name', 'shifts[0].intervalHours'
   message: string;
 }
 

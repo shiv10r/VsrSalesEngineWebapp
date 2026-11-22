@@ -11,8 +11,6 @@ const AGENT_COLORS: Record<AgentId, string> = {
   dedupe: '#7959dc',
   scorer: '#d99126',
   'contact-finder': '#159e7e',
-  drafter: '#d6409f',
-  compliance: '#c2410c',
   reporter: '#5b6b86',
 };
 

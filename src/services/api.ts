@@ -3,11 +3,7 @@ import { createAuthApi } from './auth';
 import { createOpportunitiesApi } from './opportunities';
 import { createSourcesApi } from './sources';
 import { createContactsApi } from './contacts';
-import { createOutreachApi } from './outreach';
-import { createCampaignsApi } from './campaigns';
 import { createSchedulesApi } from './schedules';
-import { createReliabilityApi } from './reliability';
-import { createAiApi } from './ai';
 import { createAgentsApi } from './agents';
 import { createLocalLeadsApi } from './localLeads';
 
@@ -20,11 +16,7 @@ export const api = {
   ...createOpportunitiesApi(core),
   ...createSourcesApi(core),
   ...createContactsApi(core),
-  ...createOutreachApi(core),
-  ...createCampaignsApi(core),
   ...createSchedulesApi(core),
-  ...createReliabilityApi(core),
-  ...createAiApi(core),
   ...createAgentsApi(core),
   ...createLocalLeadsApi(core),
 };

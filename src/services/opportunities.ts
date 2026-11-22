@@ -13,8 +13,6 @@ export function createOpportunitiesApi(core: ApiCore) {
       status: o.status,
       fit: o.fit,
       type: o.type,
-      docs: o.hasVendorDocRequirements ?? false,
-      vendorRequirementNotes: o.vendorRequirementNotes,
       sourceUrl: o.sourceUrl,
       evidenceSnippet: o.evidenceSnippet,
       statusHistory: o.statusHistory || [],

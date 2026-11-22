@@ -19,7 +19,7 @@ interface UiLike {
  * every 2s during a run, every 10s otherwise. New events are fetched with afterId so nothing reloads.
  */
 export function useAgents(ui: UiLike) {
-  const enabled = ui.page === 'Agents' || ui.page === 'Dashboard';
+  const enabled = ui.page === 'Agents' || ui.page === 'Dashboard' || ui.page === 'Activity log';
   const [overview, setOverview] = useState<AgentsOverview | null>(null);
   const [runs, setRuns] = useState<AgentRun[]>([]);
   const [events, setEvents] = useState<AgentEvent[]>([]);

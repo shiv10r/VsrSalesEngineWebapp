@@ -31,8 +31,6 @@ export function useOpportunities(ui: UiState) {
       location: payload.location || 'Uttar Pradesh, India',
       fit: payload.fit || 'High',
       type: payload.type || 'Individual developer',
-      hasVendorDocRequirements: !!payload.docs,
-      vendorRequirementNotes: payload.vendorRequirementNotes,
       sourceUrl: payload.sourceUrl,
       evidenceSnippet: payload.evidenceSnippet,
     });

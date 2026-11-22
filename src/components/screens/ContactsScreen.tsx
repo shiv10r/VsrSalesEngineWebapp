@@ -57,7 +57,7 @@ export function ContactsScreen({ ctx }: { ctx: AppCtx }) {
                         <button
                           className="btn btn-sm btn-outline"
                           style={{ padding: '3px 8px', fontSize: '0.75rem', borderRadius: 4, cursor: 'pointer' }}
-                          onClick={() => handleQualifyContact(c.id, 'Verified', 'Ready for outreach')}
+                          onClick={() => handleQualifyContact(c.id, 'Verified', 'Verified by you')}
                         >
                           Verify
                         </button>
