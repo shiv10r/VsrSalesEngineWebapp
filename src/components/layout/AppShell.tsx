@@ -18,7 +18,7 @@ export function AppShell({ ctx }: { ctx: AppCtx }) {
     guestMode, userEmail, setModal, globalSearch, setGlobalSearch, setQuery, setDark, modal,
     contacts, setOutreachRows, notify, setCampaigns, handleCreateContact, handleCreateOpportunity,
     handleCreateSchedule, detail, setDetail, handleStatusChange, handleArchive,
-    selectedGateCampaign, setSelectedGateCampaign, toast,
+    selectedGateCampaign, setSelectedGateCampaign, toast, handleMarkLinkedInRequested,
   } = ctx;
 
   return (
@@ -159,6 +159,9 @@ export function AppShell({ ctx }: { ctx: AppCtx }) {
           onNotify={notify}
           onStatusChange={handleStatusChange}
           onArchive={handleArchive}
+          contacts={contacts}
+          guest={guestMode}
+          onMarkLinkedIn={handleMarkLinkedInRequested}
         />
       )}
       {selectedGateCampaign && (
