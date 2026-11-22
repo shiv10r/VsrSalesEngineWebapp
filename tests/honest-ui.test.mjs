@@ -78,7 +78,7 @@ test('real server status banner', async (t) => {
 test('no invented data on screen', async (t) => {
   await t.test('hooks start empty, not with demo rows', () => {
     const html = m.render(m.Probe, {});
-    assert.match(html, /\{&quot;o&quot;:\[\],&quot;c&quot;:\[\],&quot;k&quot;:\[\]\}/);
+    assert.match(html, /\{&quot;o&quot;:\[\],&quot;c&quot;:\[\]\}/);
   });
 
   await t.test('sources screen shows an honest message instead of made-up sources', () => {
